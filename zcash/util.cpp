@@ -1,4 +1,4 @@
-#include "zcash/util.h"
+#include "util.h"
 #include <algorithm>
 #include <stdexcept>
 

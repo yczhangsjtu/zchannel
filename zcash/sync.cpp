@@ -4,7 +4,7 @@
 
 #include "sync.h"
 
-#include "util.h"
+#include "zcashutil.h"
 #include "utilstrencodings.h"
 
 #include <stdio.h>

@@ -17,7 +17,7 @@
 #endif
 
 #include "crypto/equihash.h"
-#include "util.h"
+#include "zcashutil.h"
 
 #include <algorithm>
 #include <iostream>
