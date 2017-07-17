@@ -78,7 +78,7 @@ int main() {
   auto ai = pb.auxiliary_input();
   /* If res is not zero, this function will crash complaining that
    * the R1CS constraint system is not satisfied. */
-  auto proof = r1cs_ppzksnark_prover<ppT>(keypair.pk,pi,ai);
+  auto proof = r1cs_ppzksnark_prover<ppT>(keypair.pk,pi,ai,pb.constraint_system);
 
   /********************************************/
   /* Verifier: fill in only the public inputs */
