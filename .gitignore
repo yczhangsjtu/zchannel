@@ -3,7 +3,7 @@ circuit
 *.o
 .deps
 
-Makefile
+/Makefile
 Makefile.in
 /ar-lib
 /mdate-sh
