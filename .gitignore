@@ -1,4 +1,4 @@
-circuit
+/demo/circuit
 
 *.o
 .deps
