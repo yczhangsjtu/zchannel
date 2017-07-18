@@ -5,7 +5,7 @@ LIBPATH = -L$(top_srcdir)/libsnark -L$(top_srcdir)/libsnark/depinst/lib -L$(top_
 
 AM_CPPFLAGS = $(INCLUDE) $(OPTIONS) $(ENDIANS)
 
-bin_PROGRAMS = generate
+bin_PROGRAMS = generate createjs
 generate_SOURCES = GenerateParams.cpp Address.cpp amount.cpp hash.cpp \
 	IncrementalMerkleTree.cpp JoinSplit.cpp Note.cpp NoteEncryption.cpp prf.cpp \
 	Proof.cpp pubkey.cpp random.cpp sync.cpp util.cpp utilstrencodings.cpp \
@@ -15,7 +15,20 @@ generate_SOURCES = GenerateParams.cpp Address.cpp amount.cpp hash.cpp \
 	crypto/hmac_sha256.cpp crypto/sha1.cpp crypto/ripemd160.cpp \
 	crypto/hmac_sha512.cpp crypto/equihash.cpp support/pagelocker.cpp \
 	support/cleanse.cpp
+createjs_SOURCES = CreateJoinSplit.cpp Address.cpp amount.cpp hash.cpp \
+	IncrementalMerkleTree.cpp JoinSplit.cpp Note.cpp NoteEncryption.cpp prf.cpp \
+	Proof.cpp pubkey.cpp random.cpp sync.cpp util.cpp utilstrencodings.cpp \
+	utiltime.cpp zcashutil.cpp arith_uint256.cpp key.cpp keystore.cpp\
+	compat/glibc_compat.cpp compat/glibc_sanity.cpp compat/glibcxx_sanity.cpp \
+	compat/strnlen.cpp uint256.cpp crypto/sha512.cpp crypto/sha256.cpp \
+	crypto/hmac_sha256.cpp crypto/sha1.cpp crypto/ripemd160.cpp \
+	crypto/hmac_sha512.cpp crypto/equihash.cpp support/pagelocker.cpp \
+	support/cleanse.cpp primitives/block.cpp primitives/transaction.cpp \
+	script/interpreter.cpp script/script.cpp script/script_error.cpp \
+	script/sigcache.cpp script/sign.cpp script/standard.cpp \
+	script/zcashconsensus.cpp
 generate_LDADD = $(LIBPATH) $(ADDLIBS)
+createjs_LDADD = $(LIBPATH) $(ADDLIBS)
 
 # include_HEADERS = Address.hpp amount.h compat.h hash.h \
 # 	IncrementalMerkleTree.hpp JoinSplit.hpp NoteEncryption.hpp Note.hpp prf.h \
@@ -32,3 +45,7 @@ generate_LDADD = $(LIBPATH) $(ADDLIBS)
 # 	secp256k1/include/secp256k1_recovery.h \
 # 	support/cleanse.h support/events.h support/pagelocker.h \
 # 	support/allocators/secure.h support/allocators/zeroafterfree.h
+#		primitives/block.h primitives/transaction.h script/interpreter.h
+#		script/script_error.h script/script.h script/zcashconsensus.h
+#		script/standard.h script/sigcache.h script/sign.h
+
