@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 
 		JSDescription jsdesc(*p,
 												 pubKeyHash,
-												 anchor,
+												 {anchor, anchor},
 												 {JSInput(), JSInput()},
 												 {JSOutput(), JSOutput()},
 												 0,

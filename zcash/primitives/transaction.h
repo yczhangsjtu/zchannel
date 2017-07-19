@@ -32,7 +32,7 @@ public:
     // commitment tree at some point in the blockchain
     // history or in the history of the current
     // transaction.
-    uint256 anchor;
+		boost::array<uint256, ZC_NUM_JS_INPUTS> anchors;
 
     // Nullifiers are used to prevent double-spends. They
     // are derived from the secrets placed in the note
@@ -72,7 +72,7 @@ public:
 
     JSDescription(ZCJoinSplit& params,
             const uint256& pubKeyHash,
-            const uint256& rt,
+            const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             CAmount vpub_old,
@@ -83,7 +83,7 @@ public:
     static JSDescription Randomized(
             ZCJoinSplit& params,
             const uint256& pubKeyHash,
-            const uint256& rt,
+            const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             boost::array<size_t, ZC_NUM_JS_INPUTS>& inputMap,
@@ -110,7 +110,7 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(vpub_old);
         READWRITE(vpub_new);
-        READWRITE(anchor);
+        READWRITE(anchors);
         READWRITE(nullifiers);
         READWRITE(commitments);
         READWRITE(ephemeralKey);
@@ -125,7 +125,7 @@ public:
         return (
             a.vpub_old == b.vpub_old &&
             a.vpub_new == b.vpub_new &&
-            a.anchor == b.anchor &&
+            a.anchors == b.anchors &&
             a.nullifiers == b.nullifiers &&
             a.commitments == b.commitments &&
             a.ephemeralKey == b.ephemeralKey &&

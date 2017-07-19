@@ -77,7 +77,7 @@ public:
         boost::array<uint256, NumOutputs>& out_commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const uint256& rt,
+        const boost::array<uint256, NumInputs>& rt,
         bool computeProof = true
     ) = 0;
 
@@ -91,7 +91,7 @@ public:
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const uint256& rt
+        const boost::array<uint256, NumInputs>& rt
     ) = 0;
 
 protected:

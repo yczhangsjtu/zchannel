@@ -152,7 +152,7 @@ public:
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const uint256& rt
+        const boost::array<uint256, NumInputs>& rt
     ) {
         if (!vk || !vk_precomp) {
             throw std::runtime_error("JoinSplit verifying key not loaded");
@@ -197,7 +197,7 @@ public:
         boost::array<uint256, NumOutputs>& out_commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const uint256& rt,
+        const boost::array<uint256, NumInputs>& rt,
         bool computeProof
     ) {
         if (computeProof && !pk) {
@@ -221,7 +221,7 @@ public:
                 // If note has nonzero value
                 if (inputs[i].note.value != 0) {
                     // The witness root must equal the input root.
-                    if (inputs[i].witness.root() != rt) {
+                    if (inputs[i].witness.root() != rt[i]) {
                         throw std::invalid_argument("joinsplit not anchored to the correct root");
                     }
 
