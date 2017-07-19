@@ -13,23 +13,30 @@ int main(int argc, char **argv)
 {
     libsnark::start_profiling();
 
+    if(argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " provingKeyFileName verificationKeyFileName" << std::endl;
+        return 1;
+    }
+    std::string pkFile = argv[1];
+    std::string vkFile = argv[2];
+
     auto p = ZCJoinSplit::Unopened();
-    p->loadVerifyingKey((ZC_GetParamsDir() / "sprout-verifying.key").string());
-    p->setProvingKeyPath((ZC_GetParamsDir() / "sprout-proving.key").string());
+    p->loadVerifyingKey(vkFile);
+    p->setProvingKeyPath(pkFile);
     p->loadProvingKey();
 
     // construct a proof.
 
-    for (int i = 0; i < 5; i++) {
-        uint256 anchor = ZCIncrementalMerkleTree().root();
-        uint256 pubKeyHash;
+    // for (int i = 0; i < 5; i++) {
+		uint256 anchor = ZCIncrementalMerkleTree().root();
+		uint256 pubKeyHash;
 
-        JSDescription jsdesc(*p,
-                             pubKeyHash,
-                             anchor,
-                             {JSInput(), JSInput()},
-                             {JSOutput(), JSOutput()},
-                             0,
-                             0);
-    }
+		JSDescription jsdesc(*p,
+												 pubKeyHash,
+												 anchor,
+												 {JSInput(), JSInput()},
+												 {JSOutput(), JSOutput()},
+												 0,
+												 0);
+    // }
 }
