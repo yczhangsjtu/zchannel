@@ -40,7 +40,8 @@ public:
     JSOutput();
     JSOutput(PaymentAddress addr, uint64_t value) : addr(addr), value(value) { }
 
-    Note note(const uint252& phi, const uint256& r, size_t i, const uint256& h_sig) const;
+    Note note(const uint252& phi, const uint256& r, size_t i, const uint256& h_sig,
+				uint256 pkcm = 0, uint256 tlist = 0, uint256 pkh = 0, uint256 u = 0) const;
 };
 
 template<size_t NumInputs, size_t NumOutputs>
@@ -85,6 +86,7 @@ public:
         const ZCProof& proof,
         ProofVerifier& verifier,
         const uint256& pubKeyHash,
+        const uint256& pubKeyListHash, // added by zchannel
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& hmacs,
         const boost::array<uint256, NumInputs>& nullifiers,

@@ -71,12 +71,14 @@ JSDescription JSDescription::Randomized(
 bool JSDescription::Verify(
     ZCJoinSplit& params,
     libzcash::ProofVerifier& verifier,
-    const uint256& pubKeyHash
+    const uint256& pubKeyHash,
+    const uint256& pubKeyListHash
 ) const {
     return params.verify(
         proof,
         verifier,
         pubKeyHash,
+        pubKeyListHash,
         randomSeed,
         macs,
         nullifiers,
