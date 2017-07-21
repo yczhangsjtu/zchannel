@@ -15,8 +15,20 @@ public:
     uint256 rho;
     uint256 r;
 
-    Note(uint256 a_pk, uint64_t value, uint256 rho, uint256 r)
-        : a_pk(a_pk), value(value), rho(rho), r(r) {}
+		// These four are the modifications by zchannel.
+		// pkcm and tlist are visible to both payer and payee
+		uint256 pkcm;
+		uint256 tlist;
+		// but pkh and u can only be perceived by payee
+		// so they are left unused when this Note is in
+		// output, so they are not in plaintext.
+		uint256 pkh;
+		uint256 u;
+
+    Note(uint256 a_pk, uint64_t value, uint256 rho, uint256 r,
+				uint256 pkcm = 0, uint256 tlist = 0, uint256 pkh = 0, uint256 u = 0)
+        : a_pk(a_pk), value(value), rho(rho), r(r),
+				  pkcm(pkcm), tlist(tlist), pkh(pkh), u(u) {}
 
     Note();
 
@@ -29,6 +41,10 @@ public:
     uint64_t value = 0;
     uint256 rho;
     uint256 r;
+
+    uint256 tlist;
+    uint256 pkcm;
+
     boost::array<unsigned char, ZC_MEMO_SIZE> memo;
 
     NotePlaintext() {}
@@ -52,6 +68,9 @@ public:
         READWRITE(rho);
         READWRITE(r);
         READWRITE(memo);
+
+        READWRITE(tlist);
+        READWRITE(pkcm);
     }
 
     static NotePlaintext decrypt(const ZCNoteDecryption& decryptor,
