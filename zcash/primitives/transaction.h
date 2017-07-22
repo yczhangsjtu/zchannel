@@ -20,6 +20,8 @@
 #include "JoinSplit.hpp"
 #include "Proof.hpp"
 
+typedef uint64 BHeight;
+
 class JSDescription
 {
 public:
@@ -27,6 +29,17 @@ public:
     // pool, respectively.
     CAmount vpub_old;
     CAmount vpub_new;
+
+		// Minimum Block Height, for the timing in the time
+		// lock scheme. A JoinSplit can only be in a block
+		// with higher block height than the MBH of this
+		// JoinSplit.
+		BHeight mbh;
+
+		// Index for the public key list and lock time list,
+		// indicating which of the public keys is used, and
+		// which of the lock times is used.
+		boost::array<uint64, ZC_NUM_JS_INPUTS> index;
 
     // JoinSplits are always anchored to a root in the note
     // commitment tree at some point in the blockchain
@@ -72,6 +85,8 @@ public:
 
     JSDescription(ZCJoinSplit& params,
             const uint256& pubKeyHash,
+						BHeight mbh,
+            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
             const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
@@ -83,6 +98,8 @@ public:
     static JSDescription Randomized(
             ZCJoinSplit& params,
             const uint256& pubKeyHash,
+						uint64 mbh,
+            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
             const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
