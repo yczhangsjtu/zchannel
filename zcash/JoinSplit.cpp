@@ -356,6 +356,7 @@ public:
                 anchors,
 								mbh,
 								bh,
+								index,
                 h_sig,
                 inputs,
                 out_notes,

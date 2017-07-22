@@ -19,6 +19,11 @@ private:
     boost::array<std::shared_ptr<digest_variable<FieldT>>, NumOutputs> zk_output_commitments;
     pb_variable_array<FieldT> zk_vpub_old;
     pb_variable_array<FieldT> zk_vpub_new;
+		// For zchannel
+		boost::array<pb_variable_array<FieldT>, NumInputs> bh;
+		boost::array<pb_variable_array<FieldT>, NumInputs> index;
+		boost::array<pb_variable_array<FieldT>, NumInputs> lockt;
+    pb_variable_array<FieldT> mbh;
 
     // Aux inputs
     pb_variable<FieldT> ZERO;
@@ -191,6 +196,7 @@ public:
         const boost::array<uint256, NumInputs>& rt,
 				uint64_t mbh,
         const boost::array<uint64_t, NumInputs>& bh,
+        const boost::array<uint64_t, NumInputs>& index,
         const uint256& h_sig,
         const boost::array<JSInput, NumInputs>& inputs,
         const boost::array<Note, NumOutputs>& outputs,

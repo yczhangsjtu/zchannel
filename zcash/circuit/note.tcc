@@ -43,6 +43,7 @@ private:
     std::shared_ptr<PRF_nf_gadget<FieldT>> expose_nullifiers;
 public:
     std::shared_ptr<digest_variable<FieldT>> a_sk;
+		pb_variable_array<FieldT> tlist;
 
     input_note_gadget(
         protoboard<FieldT>& pb,
@@ -88,6 +89,8 @@ public:
             rt,
             value_enforce
         ));
+
+				tlist.allocate(pb,256);
     }
 
     void generate_r1cs_constraints() {
