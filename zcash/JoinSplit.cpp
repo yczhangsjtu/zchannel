@@ -149,14 +149,14 @@ public:
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& macs,
         const boost::array<uint256, NumInputs>& nullifiers,
-        const boost::array<uint256, NumInputs>& pkh,
+        const boost::array<uint256, NumInputs>& pkh, // to be handled
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
         const boost::array<uint256, NumInputs>& anchors,
-				uint64_t mbh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
+				uint64_t mbh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index // to be handled
     ) {
         if (!vk || !vk_precomp) {
             throw std::runtime_error("JoinSplit verifying key not loaded");
@@ -411,11 +411,11 @@ uint256 JoinSplit<NumInputs, NumOutputs>::h_sig(
     return output;
 }
 
-Note JSOutput::note(const uint252& phi, const uint256& r, size_t i, const uint256& h_sig,
-		uint256 pkcm, uint256 tlist, uint256 pkh, uint256 u) const {
+Note JSOutput::note(const uint252& phi, const uint256& r, size_t i,
+		const uint256& h_sig, uint256 pkcm, uint256 tlist, uint256 pkh) const {
     uint256 rho = PRF_rho(phi, i, h_sig);
 
-    return Note(addr.a_pk, value, rho, r, pkcm, tlist, pkh, u);
+    return Note(addr.a_pk, value, rho, r, pkcm, tlist, pkh);
 }
 
 JSOutput::JSOutput() : addr(uint256(), uint256()), value(0) {

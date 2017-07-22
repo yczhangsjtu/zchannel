@@ -41,7 +41,7 @@ public:
     JSOutput(PaymentAddress addr, uint64_t value) : addr(addr), value(value) { }
 
     Note note(const uint252& phi, const uint256& r, size_t i, const uint256& h_sig,
-				uint256 pkcm = 0, uint256 tlist = 0, uint256 pkh = 0, uint256 u = 0) const;
+				uint256 pkcm = 0, uint256 tlist = 0, uint256 pkh = 0) const;
 };
 
 template<size_t NumInputs, size_t NumOutputs>
@@ -93,14 +93,14 @@ public:
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& hmacs,
         const boost::array<uint256, NumInputs>& nullifiers,
-        const boost::array<uint256, NumInputs>& pkh, // to be handled
+        const boost::array<uint256, NumInputs>& pkh,
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
         const boost::array<uint256, NumInputs>& anchors,
-				uint64_t mbh, // to be handled
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index // to be handled
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
     ) = 0;
 
 protected:
