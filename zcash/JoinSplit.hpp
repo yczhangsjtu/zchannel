@@ -90,18 +90,17 @@ public:
         const ZCProof& proof,
         ProofVerifier& verifier,
         const uint256& pubKeyHash,
-        const uint256& pubKeyListHash, // added by zchannel
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& hmacs,
         const boost::array<uint256, NumInputs>& nullifiers,
-        const boost::array<uint256, NumInputs>& pkh,
+        const boost::array<uint256, NumInputs>& pkh, // to be handled
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
         const boost::array<uint256, NumInputs>& anchors,
-				uint64_t mbh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
+				uint64_t mbh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index // to be handled
     ) = 0;
 
 protected:

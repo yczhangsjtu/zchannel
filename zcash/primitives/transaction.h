@@ -123,8 +123,7 @@ public:
     bool Verify(
         ZCJoinSplit& params,
         libzcash::ProofVerifier& verifier,
-        const uint256& pubKeyHash,
-        const uint256& pubKeyListHash
+        const uint256& pubKeyHash
     ) const;
 
     // Returns the calculated h_sig

@@ -146,7 +146,6 @@ public:
         const ZCProof& proof,
         ProofVerifier& verifier,
         const uint256& pubKeyHash,
-        const uint256& pubKeyListHash, // This one is added by zchannel
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& macs,
         const boost::array<uint256, NumInputs>& nullifiers,
@@ -190,23 +189,23 @@ public:
     }
 
     ZCProof prove(
-        const boost::array<JSInput, NumInputs>& inputs,
+        const boost::array<JSInput, NumInputs>& inputs, // contains something
         const boost::array<JSOutput, NumOutputs>& outputs,
-        boost::array<Note, NumOutputs>& out_notes,
+        boost::array<Note, NumOutputs>& out_notes, // contains something more
         boost::array<ZCNoteEncryption::Ciphertext, NumOutputs>& out_ciphertexts,
         uint256& out_ephemeralKey,
         const uint256& pubKeyHash,
         uint256& out_randomSeed,
         boost::array<uint256, NumInputs>& out_macs,
         boost::array<uint256, NumInputs>& out_nullifiers,
-        boost::array<uint256, NumInputs>& pkh,
+        boost::array<uint256, NumInputs>& pkh, // to be handled
         boost::array<uint256, NumOutputs>& out_commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
         const boost::array<uint256, NumInputs>& anchors,
-				uint64_t mbh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+				uint64_t mbh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index, // to be handled
         bool computeProof
     ) {
         if (computeProof && !pk) {
