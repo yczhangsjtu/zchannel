@@ -189,6 +189,8 @@ public:
     void generate_r1cs_witness(
         const uint252& phi,
         const boost::array<uint256, NumInputs>& rt,
+				uint64_t mbh,
+        const boost::array<uint64_t, NumInputs>& bh,
         const uint256& h_sig,
         const boost::array<JSInput, NumInputs>& inputs,
         const boost::array<Note, NumOutputs>& outputs,

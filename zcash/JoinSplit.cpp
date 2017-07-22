@@ -354,6 +354,8 @@ public:
             g.generate_r1cs_witness(
                 phi,
                 anchors,
+								mbh,
+								bh,
                 h_sig,
                 inputs,
                 out_notes,
