@@ -19,16 +19,26 @@ private:
     boost::array<std::shared_ptr<digest_variable<FieldT>>, NumOutputs> zk_output_commitments;
     pb_variable_array<FieldT> zk_vpub_old;
     pb_variable_array<FieldT> zk_vpub_new;
-		// For zchannel
-		boost::array<pb_variable_array<FieldT>, NumInputs> bh;
-		boost::array<pb_variable_array<FieldT>, NumInputs> index;
-		boost::array<pb_variable_array<FieldT>, NumInputs> lockt;
-    pb_variable_array<FieldT> mbh;
+
+		// Verifier inputs for zchannel
+		boost::array<pb_variable_array<FieldT>, NumInputs> bh64;
+		boost::array<pb_variable_array<FieldT>, NumInputs> index64;
+		boost::array<std::shared_ptr<digest_variable<FieldT>>, NumInputs> tlist256;
+    pb_variable_array<FieldT> mbh64;
 
     // Aux inputs
     pb_variable<FieldT> ZERO;
     std::shared_ptr<digest_variable<FieldT>> zk_phi;
     pb_variable_array<FieldT> zk_total_uint64;
+
+		// Aux inputs for zchannel
+		boost::array<pb_variable<FieldT>, NumInputs> bh;
+		boost::array<pb_variable<FieldT>, NumInputs> index;
+		boost::array<pb_variable_array<FieldT>, NumInputs> tlist64;
+    pb_variable<FieldT> mbh;
+
+		boost::array<pb_variable<FieldT>, NumInputs> lockt;
+		boost::array<pb_variable<FieldT>, NumInputs> success_flag;
 
     // Input note gadgets
     boost::array<std::shared_ptr<input_note_gadget<FieldT>>, NumInputs> zk_input_notes;
@@ -36,6 +46,9 @@ private:
 
     // Output note gadgets
     boost::array<std::shared_ptr<output_note_gadget<FieldT>>, NumOutputs> zk_output_notes;
+
+		// Gadgets for zchannel
+		boost::array<std::shared_ptr<loose_multiplexing_gadget<FieldT>>, NumInputs> mutex;
 
 public:
     // PRF_pk only has a 1-bit domain separation "nonce"
@@ -60,9 +73,14 @@ public:
             alloc_uint256(zk_unpacked_inputs, zk_h_sig);
 
             for (size_t i = 0; i < NumInputs; i++) {
-							alloc_uint256(zk_unpacked_inputs, zk_merkle_root[i]);
-							alloc_uint256(zk_unpacked_inputs, zk_input_nullifiers[i]);
-							alloc_uint256(zk_unpacked_inputs, zk_input_macs[i]);
+								alloc_uint256(zk_unpacked_inputs, zk_merkle_root[i]);
+								alloc_uint256(zk_unpacked_inputs, zk_input_nullifiers[i]);
+								alloc_uint256(zk_unpacked_inputs, zk_input_macs[i]);
+
+								// ZChannel part
+								alloc_uint64(zk_unpacked_inputs, bh64[i]);
+								alloc_uint64(zk_unpacked_inputs, index64[i]);
+								alloc_uint256(zk_unpacked_inputs, tlist256[i]);
             }
 
             for (size_t i = 0; i < NumOutputs; i++) {
@@ -71,6 +89,9 @@ public:
 
             alloc_uint64(zk_unpacked_inputs, zk_vpub_old);
             alloc_uint64(zk_unpacked_inputs, zk_vpub_new);
+
+						// ZChannel part
+						alloc_uint64(zk_unpacked_inputs, mbh64);
 
             assert(zk_unpacked_inputs.size() == verifying_input_bit_size());
 
@@ -96,6 +117,8 @@ public:
         zk_phi.reset(new digest_variable<FieldT>(pb, 252, ""));
 
         zk_total_uint64.allocate(pb, 64);
+				mbh64.allocate(pb, 64);
+				mbh.allocate(pb);
 
         for (size_t i = 0; i < NumInputs; i++) {
             // Input note gadget for commitments, macs, nullifiers,
@@ -117,6 +140,23 @@ public:
                 i ? true : false,
                 zk_input_macs[i]
             ));
+
+						// For ZChannel
+						bh[i].allocate(pb);
+						index[i].allocate(pb);
+						tlist64[i].allocate(pb,4);
+
+						lockt[i].allocate(pb);
+						success_flag[i].allocate(pb);
+
+						mutex[i].reset(new loose_multiplexing_gadget<FieldT>(
+								pb,
+								tlist64[i],
+								index[i],
+								lockt[i],
+								success_flag[i],
+								""
+						));
         }
 
         for (size_t i = 0; i < NumOutputs; i++) {
@@ -189,6 +229,27 @@ public:
                 packed_addition(zk_total_uint64)
             ));
         }
+
+				// Time Lock
+				{
+						this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
+								1,
+								mbh,
+								packed_addition(mbh64)
+						));
+						for (size_t i = 0; i < NumInputs; i++) {
+								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
+										1,
+										index[i],
+										packed_addition(index64[i])
+								));
+								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
+										1,
+										bh[i],
+										packed_addition(bh64[i])
+								));
+						}
+				}
     }
 
     void generate_r1cs_witness(
@@ -329,12 +390,17 @@ public:
 					acc += 256; // the merkle root (anchor)
 					acc += 256; // nullifier
 					acc += 256; // mac
+					acc += 64; // block height
+					acc += 64; // index
+					acc += 256; // lock time
         }
         for (size_t i = 0; i < NumOutputs; i++) {
             acc += 256; // new commitment
         }
         acc += 64; // vpub_old
         acc += 64; // vpub_new
+
+				acc += 64; // minimum block height
 
         return acc;
     }
