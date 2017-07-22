@@ -50,6 +50,26 @@ void MappedShuffle(RandomAccessIterator first,
 }
 
 /**
+ * Rearrange the elements in the range [first,first+len) according to the map
+ */
+template <typename RandomAccessContainer, typename MapRandomAccessContainer>
+void MapShuffle(RandomAccessContainer& first,
+                MapRandomAccessContainer& mapFirst,
+                size_t len)
+{
+		RandomAccessContainer temp;
+    for (size_t i = 0; i < len; ++i) {
+        auto r = mapFirst[i];
+        assert(r >= 0);
+        assert(r <= len-1);
+				temp[i] = first[mapFirst[i]];
+    }
+    for (size_t i = 0; i < len; ++i) {
+				first[i] = temp[i];
+		}
+}
+
+/**
  * Seed insecure_rand using the random pool.
  * @param Deterministic Use a deterministic seed
  */

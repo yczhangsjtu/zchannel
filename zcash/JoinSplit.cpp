@@ -150,10 +150,14 @@ public:
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& macs,
         const boost::array<uint256, NumInputs>& nullifiers,
+        const boost::array<uint256, NumInputs>& pkh,
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const boost::array<uint256, NumInputs>& rt
+        const boost::array<uint256, NumInputs>& anchors,
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
     ) {
         if (!vk || !vk_precomp) {
             throw std::runtime_error("JoinSplit verifying key not loaded");
@@ -165,7 +169,7 @@ public:
             uint256 h_sig = this->h_sig(randomSeed, nullifiers, pubKeyHash);
 
             auto witness = joinsplit_gadget<FieldT, NumInputs, NumOutputs>::witness_map(
-                rt,
+                anchors,
                 h_sig,
                 macs,
                 nullifiers,
@@ -195,10 +199,14 @@ public:
         uint256& out_randomSeed,
         boost::array<uint256, NumInputs>& out_macs,
         boost::array<uint256, NumInputs>& out_nullifiers,
+        boost::array<uint256, NumInputs>& pkh,
         boost::array<uint256, NumOutputs>& out_commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const boost::array<uint256, NumInputs>& rt,
+        const boost::array<uint256, NumInputs>& anchors,
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
         bool computeProof
     ) {
         if (computeProof && !pk) {
@@ -222,7 +230,7 @@ public:
                 // If note has nonzero value
                 if (inputs[i].note.value != 0) {
                     // The witness root must equal the input root.
-                    if (inputs[i].witness.root() != rt[i]) {
+                    if (inputs[i].witness.root() != anchors[i]) {
                         throw std::invalid_argument("joinsplit not anchored to the correct root");
                     }
 
@@ -323,7 +331,7 @@ public:
             g.generate_r1cs_constraints();
             g.generate_r1cs_witness(
                 phi,
-                rt,
+                anchors,
                 h_sig,
                 inputs,
                 out_notes,

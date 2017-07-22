@@ -75,10 +75,14 @@ public:
         uint256& out_randomSeed,
         boost::array<uint256, NumInputs>& out_hmacs,
         boost::array<uint256, NumInputs>& out_nullifiers,
+        boost::array<uint256, NumInputs>& pkh,
         boost::array<uint256, NumOutputs>& out_commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const boost::array<uint256, NumInputs>& rt,
+        const boost::array<uint256, NumInputs>& anchors,
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
         bool computeProof = true
     ) = 0;
 
@@ -90,10 +94,14 @@ public:
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& hmacs,
         const boost::array<uint256, NumInputs>& nullifiers,
+        const boost::array<uint256, NumInputs>& pkh,
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
-        const boost::array<uint256, NumInputs>& rt
+        const boost::array<uint256, NumInputs>& anchors,
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
     ) = 0;
 
 protected:

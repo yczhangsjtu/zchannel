@@ -30,9 +30,14 @@ int main(int argc, char **argv)
     // for (int i = 0; i < 5; i++) {
 		uint256 anchor = ZCIncrementalMerkleTree().root();
 		uint256 pubKeyHash;
+		BHeight BH1,BH2,MBH;
+		uint64_t k1,k2;
 
 		JSDescription jsdesc(*p,
 												 pubKeyHash,
+												 MBH,
+												 {BH1,BH2},
+												 {k1,k2},
 												 {anchor, anchor},
 												 {JSInput(), JSInput()},
 												 {JSOutput(), JSOutput()},

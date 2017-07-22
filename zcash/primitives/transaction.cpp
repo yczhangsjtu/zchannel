@@ -12,13 +12,16 @@
 JSDescription::JSDescription(ZCJoinSplit& params,
             const uint256& pubKeyHash,
 						BHeight mbh,
-            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
+						const boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
+            const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
             const boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             CAmount vpub_old,
             CAmount vpub_new,
-            bool computeProof) : vpub_old(vpub_old), vpub_new(vpub_new), anchors(anchors)
+            bool computeProof)
+	: vpub_old(vpub_old), vpub_new(vpub_new), anchors(anchors),
+	  mbh(mbh), bh(bh), index(index)
 {
     boost::array<libzcash::Note, ZC_NUM_JS_OUTPUTS> notes;
 
@@ -35,10 +38,14 @@ JSDescription::JSDescription(ZCJoinSplit& params,
         randomSeed,
         macs,
         nullifiers,
+				pkh,
         commitments,
         vpub_old,
         vpub_new,
         anchors,
+				mbh,
+				bh,
+				index,
         computeProof
     );
 }
@@ -46,9 +53,10 @@ JSDescription::JSDescription(ZCJoinSplit& params,
 JSDescription JSDescription::Randomized(
             ZCJoinSplit& params,
             const uint256& pubKeyHash,
-						uint64 mbh,
-            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
-            const boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
+						uint64_t mbh,
+            boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
+            boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             boost::array<size_t, ZC_NUM_JS_INPUTS>& inputMap,
@@ -66,9 +74,12 @@ JSDescription JSDescription::Randomized(
 
     MappedShuffle(inputs.begin(), inputMap.begin(), ZC_NUM_JS_INPUTS, gen);
     MappedShuffle(outputs.begin(), outputMap.begin(), ZC_NUM_JS_OUTPUTS, gen);
+		MapShuffle(bh, inputMap, ZC_NUM_JS_INPUTS);
+		MapShuffle(index, inputMap, ZC_NUM_JS_INPUTS);
+		MapShuffle(anchors, inputMap, ZC_NUM_JS_INPUTS);
 
     return JSDescription(
-        params, pubKeyHash, mbh, index, anchors, inputs, outputs,
+        params, pubKeyHash, mbh, bh, index, anchors, inputs, outputs,
         vpub_old, vpub_new, computeProof);
 }
 
@@ -86,10 +97,14 @@ bool JSDescription::Verify(
         randomSeed,
         macs,
         nullifiers,
+				pkh,
         commitments,
         vpub_old,
         vpub_new,
-				anchors
+				anchors,
+				mbh,
+				bh,
+				index
     );
 }
 

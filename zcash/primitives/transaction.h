@@ -20,7 +20,7 @@
 #include "JoinSplit.hpp"
 #include "Proof.hpp"
 
-typedef uint64 BHeight;
+typedef uint64_t BHeight;
 
 class JSDescription
 {
@@ -36,10 +36,13 @@ public:
 		// JoinSplit.
 		BHeight mbh;
 
+		// Block heights of the merkle roots
+		boost::array<BHeight, ZC_NUM_JS_INPUTS> bh;
+
 		// Index for the public key list and lock time list,
 		// indicating which of the public keys is used, and
 		// which of the lock times is used.
-		boost::array<uint64, ZC_NUM_JS_INPUTS> index;
+		boost::array<uint64_t, ZC_NUM_JS_INPUTS> index;
 
     // JoinSplits are always anchored to a root in the note
     // commitment tree at some point in the blockchain
@@ -52,6 +55,9 @@ public:
     // and the secret spend-authority key known by the
     // spender.
     boost::array<uint256, ZC_NUM_JS_INPUTS> nullifiers;
+
+		// PublicKey List Hashes, committed in the input coin
+    boost::array<uint256, ZC_NUM_JS_INPUTS> pkh;
 
     // Note commitments are introduced into the commitment
     // tree, blinding the public about the values and
@@ -86,8 +92,9 @@ public:
     JSDescription(ZCJoinSplit& params,
             const uint256& pubKeyHash,
 						BHeight mbh,
-            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
-            const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
+						const boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
+            const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            const boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             CAmount vpub_old,
@@ -98,9 +105,10 @@ public:
     static JSDescription Randomized(
             ZCJoinSplit& params,
             const uint256& pubKeyHash,
-						uint64 mbh,
-            const boost::array<uint64, ZC_NUM_JS_INPUTS>& index,
-            const boost::array<uint256, ZC_NUM_JS_INPUTS>& rt,
+						uint64_t mbh,
+            boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
+            boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
             boost::array<size_t, ZC_NUM_JS_INPUTS>& inputMap,
@@ -129,6 +137,9 @@ public:
         READWRITE(vpub_old);
         READWRITE(vpub_new);
         READWRITE(anchors);
+        READWRITE(mbh);
+        READWRITE(bh);
+        READWRITE(index);
         READWRITE(nullifiers);
         READWRITE(commitments);
         READWRITE(ephemeralKey);
@@ -144,6 +155,9 @@ public:
             a.vpub_old == b.vpub_old &&
             a.vpub_new == b.vpub_new &&
             a.anchors == b.anchors &&
+						a.mbh == b.mbh &&
+						a.bh == b.bh &&
+						a.index == b.index &&
             a.nullifiers == b.nullifiers &&
             a.commitments == b.commitments &&
             a.ephemeralKey == b.ephemeralKey &&
