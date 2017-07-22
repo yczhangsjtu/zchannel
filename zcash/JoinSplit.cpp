@@ -254,6 +254,29 @@ public:
                 if (lhs_value > MAX_MONEY) {
                     throw std::invalid_argument("nonsensical left hand size of joinsplit balance");
                 }
+
+								// Time locks must expire
+								{
+									// tlist = [t1][t2][t3][t4] a list of four 64-bit integers
+									// stored in big endian
+									const uint256 &tlist = inputs[i].note.tlist;
+									uint64_t k = index[i];
+									uint64_t t = 0;
+									const unsigned char *p = tlist.begin() + k*8;
+									for (size_t j = 0; j < 8; j++) {
+										t = (t<<8) + p[j];
+									}
+									// Require that t < 2^63, bh < 2^63, t+bh < MBH
+									if ((int64_t)t < 0) {
+                    throw std::invalid_argument("invalid lock time: > 2^63");
+									}
+									if ((int64_t)(bh[i]) < 0) {
+                    throw std::invalid_argument("invalid block height: > 2^63");
+									}
+									if (t + bh[i] >= mbh) {
+                    throw std::invalid_argument("input coin not yet expired");
+									}
+								}
             }
 
             // Compute nullifier of input
