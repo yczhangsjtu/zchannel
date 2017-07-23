@@ -3,6 +3,8 @@
 *.o
 .deps
 
+tags
+
 /Makefile
 Makefile.in
 /ar-lib
