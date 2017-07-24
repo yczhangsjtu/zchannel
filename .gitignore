@@ -1,4 +1,5 @@
 /demo/circuit
+/channel/schnorr
 
 *.o
 .deps

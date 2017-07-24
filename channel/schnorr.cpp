@@ -16,6 +16,20 @@ BIGNUM *SchnorrSignature::n;
 BN_CTX *SchnorrSignature::ctx;
 std::once_flag SchnorrSignature::initflag;
 
+SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
+	if(e) BN_free(e);
+	if(s) BN_free(s);
+	e = s = NULL;
+	set(&e,sig.e);
+	set(&s,sig.s);
+	if(sig.buflen > 0) {
+		for(size_t i = 0; i < sig.buflen; i++) {
+			buf[i] = sig.buf[i];
+		}
+		buflen = sig.buflen;
+	}
+}
+
 void SchnorrSignature::set(BIGNUM **dst, BIGNUM *bn) {
 	if(bn == NULL) {
 		if(*dst) BN_free(*dst);
@@ -117,8 +131,7 @@ error:
 	}
 	SchnorrSignature sig;
 	if(res == 1) {
-		sig.setE(e);
-		sig.setS(s);
+		sig = SchnorrSignature(e,s);
 	}
 	if(k) BN_free(k);
 	if(e) BN_free(e);
@@ -185,7 +198,7 @@ error:
 	return ret;
 }
 
-unsigned char *SchnorrSignature::toBin() {
+size_t SchnorrSignature::toBin(unsigned char *dst) {
 	unsigned char *pbuf = NULL;
 	ECDSA_SIG* sig = ECDSA_SIG_new();
 	sig->r = e;
@@ -193,16 +206,89 @@ unsigned char *SchnorrSignature::toBin() {
 	buflen = i2d_ECDSA_SIG(sig,&pbuf);
 	pbuf = buf;
 	i2d_ECDSA_SIG(sig,&pbuf);
-	return buf;
+	if(dst && dst != buf) {
+		for(size_t i = 0; i < buflen; i++)
+			dst[i] = buf[i];
+	}
+	return buflen;
 }
 
 std::string SchnorrSignature::toHex() {
 	if(!buflen) {
-		toBin();
+		toBin(NULL);
 	}
 	char hexbuf[141];
-	for(int i = 0; i < buflen; i++) {
+	for(size_t i = 0; i < buflen; i++) {
 		sprintf(hexbuf+i*2,"%02x",buf[i]);
+	}
+	return std::string(hexbuf);
+}
+
+SchnorrKeyPair& SchnorrKeyPair::operator=(const SchnorrKeyPair& keypair) {
+	if(p) EC_POINT_free(p);
+	if(a) BN_free(a);
+	p = NULL;
+	a = NULL;
+	if(keypair.p) {
+		p = EC_POINT_new(SchnorrSignature::group);
+		EC_POINT_copy(p,keypair.p);
+		if(keypair.publen > 0) {
+			for(size_t i = 0; i < keypair.publen; i++)
+				pubbuf[i] = keypair.pubbuf[i];
+			publen = keypair.publen;
+		}
+	}
+	if(keypair.a) {
+		a = BN_new();
+		BN_copy(a,keypair.a);
+		if(keypair.privlen > 0) {
+			for(size_t i = 0; i < keypair.privlen; i++)
+				privbuf[i] = keypair.privbuf[i];
+			privlen = keypair.privlen;
+		}
+	}
+}
+
+size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
+	unsigned char *ppubbuf = pubbuf;
+	publen = EC_POINT_point2oct(SchnorrSignature::group,p,
+			POINT_CONVERSION_UNCOMPRESSED,ppubbuf,65,SchnorrSignature::ctx);
+	if(dst && dst != pubbuf) {
+		for(size_t i = 0; i < publen; i++)
+			dst[i] = pubbuf[i];
+	}
+	return publen;
+}
+
+size_t SchnorrKeyPair::privToBin(unsigned char *dst) {
+	unsigned char *pprivbuf = privbuf;
+	privlen = BN_num_bytes(a);
+	BN_bn2bin(a,pprivbuf);
+	if(dst && dst != pubbuf) {
+		for(size_t i = 0; i < privlen; i++)
+			dst[i] = privbuf[i];
+	}
+	return privlen;
+}
+
+std::string SchnorrKeyPair::pubToHex() {
+	if(!publen) {
+		pubToBin(NULL);
+	}
+	char hexbuf[131];
+	for(size_t i = 0; i < publen; i++) {
+		sprintf(hexbuf+i*2,"%02x",pubbuf[i]);
+	}
+	return std::string(hexbuf);
+}
+
+std::string SchnorrKeyPair::privToHex() {
+	if(!privlen) {
+		privToBin(NULL);
+	}
+	char hexbuf[131];
+	for(size_t i = 0; i < privlen; i++) {
+		sprintf(hexbuf+i*2,"%02x",privbuf[i]);
 	}
 	return std::string(hexbuf);
 }
@@ -211,6 +297,7 @@ int main() {
 	const unsigned char *msg = (const unsigned char*)"abc";
 	size_t msglen = strlen((const char*)msg);
 	SchnorrKeyPair keypair = SchnorrSignature::keygen();
+	keypair.print();
 	SchnorrSignature sig = SchnorrSignature::sign(msg,msglen,keypair.getPriv());
 	std::cout << sig.toHex() << std::endl;
 	std::cout << sig.verify(msg,msglen,keypair.getPub()) << std::endl;

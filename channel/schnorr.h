@@ -2,12 +2,15 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include <string>
+#include <iostream>
 
 class SchnorrKeyPair;
 class SchnorrSignature {
 	friend SchnorrKeyPair;
 
 	BIGNUM *e,*s;
+	unsigned char buf[70];
+	size_t buflen = 0;
 
 	static EC_GROUP *group;
 	static BIGNUM *n;
@@ -16,24 +19,27 @@ class SchnorrSignature {
 
 	void set(BIGNUM **dst, BIGNUM *bn);
 	static void initSchnorr();
-	unsigned char buf[70];
-	size_t buflen = 0;
+
 public:
+
 	SchnorrSignature():e(NULL),s(NULL){}
+	SchnorrSignature(BIGNUM *_e, BIGNUM *_s) {
+		e = s = NULL;
+		set(&e,_e);
+		set(&s,_s);
+	}
+	SchnorrSignature(const SchnorrSignature& sig): SchnorrSignature(sig.e,sig.s) {
+	}
+	SchnorrSignature& operator=(const SchnorrSignature& sig);
 	~SchnorrSignature(){
 		if(e) BN_free(e);
 		if(s) BN_free(s);
 	}
-	inline void setE(BIGNUM *bn) {
-		set(&e,bn);
-	}
-	inline void setS(BIGNUM *bn) {
-		set(&s,bn);
-	}
+
 	static SchnorrKeyPair keygen();
 	static SchnorrSignature sign(const unsigned char *msg, size_t msglen, BIGNUM *a);
 	bool verify(const unsigned char *msg, size_t msglen, EC_POINT *p);
-	unsigned char *toBin();
+	size_t toBin(unsigned char *dst);
 	std::string toHex();
 };
 
@@ -41,6 +47,10 @@ class SchnorrKeyPair {
 	friend SchnorrSignature;
 	BIGNUM *a;
 	EC_POINT *p;
+	unsigned char pubbuf[65];
+	unsigned char privbuf[32];
+	size_t publen = 0;
+	size_t privlen = 0;
 public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
 	SchnorrKeyPair(BIGNUM *_a,EC_POINT *_p){
@@ -55,10 +65,13 @@ public:
 			BN_copy(a,_a);
 		} else a = NULL;
 	}
+	SchnorrKeyPair(const SchnorrKeyPair& keypair):SchnorrKeyPair(keypair.a,keypair.p) {
+	}
 	~SchnorrKeyPair() {
 		if(p) EC_POINT_free(p);
 		if(a) BN_free(a);
 	}
+	SchnorrKeyPair& operator=(const SchnorrKeyPair& keypair);
 	inline EC_POINT *getPub() {
 		return p;
 	}
@@ -70,5 +83,13 @@ public:
 	}
 	inline SchnorrKeyPair privkey() {
 		return SchnorrKeyPair(a,NULL);
+	}
+	size_t pubToBin(unsigned char* dst);
+	size_t privToBin(unsigned char* dst);
+	std::string pubToHex();
+	std::string privToHex();
+	inline void print() {
+		std::cout << "pub  key:" << pubToHex() << std::endl;
+		std::cout << "priv key:" << privToHex() << std::endl;
 	}
 };
