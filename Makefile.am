@@ -1,1 +1,1 @@
-SUBDIRS = demo zcash
+SUBDIRS = demo zcash channel
