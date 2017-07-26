@@ -220,6 +220,14 @@ public:
 								mbh,
 								packed_addition(mbh64)
 						));
+						generate_r1cs_equals_const_constraint<FieldT>(this->pb, mbh64[0], FieldT::zero(), "ZERO");
+						for (size_t i = 1; i < 64; i++) {
+								generate_boolean_r1cs_constraint<FieldT>(
+										this->pb,
+										mbh64[i],
+										""
+								);
+						}
 						for (size_t i = 0; i < NumInputs; i++) {
 								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
 										1,
@@ -236,6 +244,14 @@ public:
 										bh[i],
 										packed_addition(bh64[i])
 								));
+								generate_r1cs_equals_const_constraint<FieldT>(this->pb, bh64[i][0], FieldT::zero(), "ZERO");
+								for (size_t j = 1; j < 64; j++) {
+										generate_boolean_r1cs_constraint<FieldT>(
+												this->pb,
+												bh64[i][j],
+												""
+										);
+								}
 						}
 				}
     }
