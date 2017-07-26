@@ -13,7 +13,7 @@ JSDescription::JSDescription(ZCJoinSplit& params,
             const uint256& pubKeyHash,
 						BHeight mbh,
 						const boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
-            const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd,
             const boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
@@ -21,7 +21,7 @@ JSDescription::JSDescription(ZCJoinSplit& params,
             CAmount vpub_new,
             bool computeProof)
 	: vpub_old(vpub_old), vpub_new(vpub_new), anchors(anchors),
-	  mbh(mbh), bh(bh), index(index)
+	  mbh(mbh), bh(bh), ovd(ovd)
 {
     boost::array<libzcash::Note, ZC_NUM_JS_OUTPUTS> notes;
 
@@ -45,7 +45,7 @@ JSDescription::JSDescription(ZCJoinSplit& params,
         anchors,
 				mbh,
 				bh,
-				index,
+				ovd,
         computeProof
     );
 }
@@ -55,7 +55,7 @@ JSDescription JSDescription::Randomized(
             const uint256& pubKeyHash,
 						uint64_t mbh,
             boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
-            boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            boost::array<bool, ZC_NUM_JS_INPUTS>& ovd,
             boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
@@ -75,11 +75,11 @@ JSDescription JSDescription::Randomized(
     MappedShuffle(inputs.begin(), inputMap.begin(), ZC_NUM_JS_INPUTS, gen);
     MappedShuffle(outputs.begin(), outputMap.begin(), ZC_NUM_JS_OUTPUTS, gen);
 		MapShuffle(bh, inputMap, ZC_NUM_JS_INPUTS);
-		MapShuffle(index, inputMap, ZC_NUM_JS_INPUTS);
+		MapShuffle(ovd, inputMap, ZC_NUM_JS_INPUTS);
 		MapShuffle(anchors, inputMap, ZC_NUM_JS_INPUTS);
 
     return JSDescription(
-        params, pubKeyHash, mbh, bh, index, anchors, inputs, outputs,
+        params, pubKeyHash, mbh, bh, ovd, anchors, inputs, outputs,
         vpub_old, vpub_new, computeProof);
 }
 
@@ -102,7 +102,7 @@ bool JSDescription::Verify(
 				anchors,
 				mbh,
 				bh,
-				index
+				ovd
     );
 }
 

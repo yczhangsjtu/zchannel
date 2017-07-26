@@ -22,8 +22,7 @@ private:
 
 		// Verifier inputs for zchannel
 		boost::array<pb_variable_array<FieldT>, NumInputs> bh64;
-		boost::array<pb_variable_array<FieldT>, NumInputs> index64;
-		boost::array<std::shared_ptr<digest_variable<FieldT>>, NumInputs> tlist256;
+		boost::array<pb_variable_array<FieldT>, NumInputs> ovd64;
     pb_variable_array<FieldT> mbh64;
 
     // Aux inputs
@@ -32,13 +31,12 @@ private:
     pb_variable_array<FieldT> zk_total_uint64;
 
 		// Aux inputs for zchannel
-		boost::array<pb_variable<FieldT>, NumInputs> bh;
-		boost::array<pb_variable<FieldT>, NumInputs> index;
-		boost::array<pb_variable_array<FieldT>, NumInputs> tlist64;
-    pb_variable<FieldT> mbh;
+		boost::array<pb_variable_array<FieldT>, NumInputs> tlock64;
 
-		boost::array<pb_variable<FieldT>, NumInputs> lockt;
-		boost::array<pb_variable<FieldT>, NumInputs> success_flag;
+		boost::array<pb_variable<FieldT>, NumInputs> tlock;
+		boost::array<pb_variable<FieldT>, NumInputs> bh;
+		boost::array<pb_variable<FieldT>, NumInputs> ovd;
+    pb_variable<FieldT> mbh;
 
     // Input note gadgets
     boost::array<std::shared_ptr<input_note_gadget<FieldT>>, NumInputs> zk_input_notes;
@@ -46,9 +44,6 @@ private:
 
     // Output note gadgets
     boost::array<std::shared_ptr<output_note_gadget<FieldT>>, NumOutputs> zk_output_notes;
-
-		// Gadgets for zchannel
-		boost::array<std::shared_ptr<loose_multiplexing_gadget<FieldT>>, NumInputs> mutex;
 
 public:
     // PRF_pk only has a 1-bit domain separation "nonce"
@@ -79,8 +74,7 @@ public:
 
 								// ZChannel part
 								alloc_uint64(zk_unpacked_inputs, bh64[i]);
-								alloc_uint64(zk_unpacked_inputs, index64[i]);
-								alloc_uint256(zk_unpacked_inputs, tlist256[i]);
+								alloc_uint64(zk_unpacked_inputs, ovd64[i]);
             }
 
             for (size_t i = 0; i < NumOutputs; i++) {
@@ -117,8 +111,6 @@ public:
         zk_phi.reset(new digest_variable<FieldT>(pb, 252, ""));
 
         zk_total_uint64.allocate(pb, 64);
-				mbh64.allocate(pb, 64);
-				mbh.allocate(pb);
 
         for (size_t i = 0; i < NumInputs; i++) {
             // Input note gadget for commitments, macs, nullifiers,
@@ -142,22 +134,13 @@ public:
             ));
 
 						// For ZChannel
+						tlock64[i].allocate(pb,64);
+
+						tlock[i].allocate(pb);
+						ovd[i].allocate(pb);
 						bh[i].allocate(pb);
-						index[i].allocate(pb);
-						tlist64[i].allocate(pb,4);
-
-						lockt[i].allocate(pb);
-						success_flag[i].allocate(pb);
-
-						mutex[i].reset(new loose_multiplexing_gadget<FieldT>(
-								pb,
-								tlist64[i],
-								index[i],
-								lockt[i],
-								success_flag[i],
-								""
-						));
         }
+				mbh.allocate(pb);
 
         for (size_t i = 0; i < NumOutputs; i++) {
             zk_output_notes[i].reset(new output_note_gadget<FieldT>(
@@ -240,9 +223,14 @@ public:
 						for (size_t i = 0; i < NumInputs; i++) {
 								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
 										1,
-										index[i],
-										packed_addition(index64[i])
+										ovd[i],
+										packed_addition(ovd64[i])
 								));
+                generate_boolean_r1cs_constraint<FieldT>(
+                    this->pb,
+                    ovd[i],
+                    ""
+                );
 								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
 										1,
 										bh[i],
@@ -257,7 +245,7 @@ public:
         const boost::array<uint256, NumInputs>& rt,
 				uint64_t mbh,
         const boost::array<uint64_t, NumInputs>& bh,
-        const boost::array<uint64_t, NumInputs>& index,
+        const boost::array<bool, NumInputs>& ovd,
         const uint256& h_sig,
         const boost::array<JSInput, NumInputs>& inputs,
         const boost::array<Note, NumOutputs>& outputs,
@@ -391,8 +379,7 @@ public:
 					acc += 256; // nullifier
 					acc += 256; // mac
 					acc += 64; // block height
-					acc += 64; // index
-					acc += 256; // lock time
+					acc += 64; // ovd flag
         }
         for (size_t i = 0; i < NumOutputs; i++) {
             acc += 256; // new commitment

@@ -156,7 +156,7 @@ public:
         const boost::array<uint256, NumInputs>& anchors,
 				uint64_t mbh, // to be handled
 				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index // to be handled
+				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd // to be handled
     ) {
         if (!vk || !vk_precomp) {
             throw std::runtime_error("JoinSplit verifying key not loaded");
@@ -205,7 +205,7 @@ public:
         const boost::array<uint256, NumInputs>& anchors,
 				uint64_t mbh, // to be handled
 				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index, // to be handled
+				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd, // to be handled
         bool computeProof
     ) {
         if (computeProof && !pk) {
@@ -255,26 +255,22 @@ public:
                     throw std::invalid_argument("nonsensical left hand size of joinsplit balance");
                 }
 
-								// Time locks must expire
+								// Time locks expire or overriden
 								{
-									// tlist = [t1][t2][t3][t4] a list of four 64-bit integers
+									// tlock = [t1][t2][t3][t4] a list of four 64-bit integers
 									// stored in big endian
-									const uint256 &tlist = inputs[i].note.tlist;
-									uint64_t k = index[i];
-									uint64_t t = 0;
-									const unsigned char *p = tlist.begin() + k*8;
-									for (size_t j = 0; j < 8; j++) {
-										t = (t<<8) + p[j];
-									}
-									// Require that t < 2^63, bh < 2^63, t+bh < MBH
-									if ((int64_t)t < 0) {
-                    throw std::invalid_argument("invalid lock time: > 2^63");
-									}
-									if ((int64_t)(bh[i]) < 0) {
-                    throw std::invalid_argument("invalid block height: > 2^63");
-									}
-									if (t + bh[i] >= mbh) {
-                    throw std::invalid_argument("input coin not yet expired");
+									uint64_t t = inputs[i].note.tlock;
+									if(!ovd[i]) {
+										// Require that t < 2^63, bh < 2^63, t+bh < MBH
+										if ((int64_t)t < 0) {
+											throw std::invalid_argument("invalid lock time: > 2^63");
+										}
+										if ((int64_t)(bh[i]) < 0) {
+											throw std::invalid_argument("invalid block height: > 2^63");
+										}
+										if (t + bh[i] >= mbh) {
+											throw std::invalid_argument("input coin not yet expired");
+										}
 									}
 								}
             }
@@ -356,7 +352,7 @@ public:
                 anchors,
 								mbh,
 								bh,
-								index,
+								ovd,
                 h_sig,
                 inputs,
                 out_notes,
@@ -438,10 +434,10 @@ uint256 JoinSplit<NumInputs, NumOutputs>::h_sig(
 }
 
 Note JSOutput::note(const uint252& phi, const uint256& r, size_t i,
-		const uint256& h_sig, uint256 pkcm, uint256 tlist, uint256 pkh) const {
+		const uint256& h_sig, uint256 pkcm, uint64_t tlock, uint256 pkh) const {
     uint256 rho = PRF_rho(phi, i, h_sig);
 
-    return Note(addr.a_pk, value, rho, r, pkcm, tlist, pkh);
+    return Note(addr.a_pk, value, rho, r, pkcm, tlock, pkh);
 }
 
 JSOutput::JSOutput() : addr(uint256(), uint256()), value(0) {

@@ -41,7 +41,7 @@ public:
     JSOutput(PaymentAddress addr, uint64_t value) : addr(addr), value(value) { }
 
     Note note(const uint252& phi, const uint256& r, size_t i, const uint256& h_sig,
-				uint256 pkcm = 0, uint256 tlist = 0, uint256 pkh = 0) const;
+				uint256 pkcm = 0, uint64_t tlock = 0, uint256 pkh = 0) const;
 };
 
 template<size_t NumInputs, size_t NumOutputs>
@@ -82,7 +82,7 @@ public:
         const boost::array<uint256, NumInputs>& anchors,
 				uint64_t mbh,
 				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd,
         bool computeProof = true
     ) = 0;
 
@@ -100,7 +100,7 @@ public:
         const boost::array<uint256, NumInputs>& anchors,
 				uint64_t mbh,
 				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index
+				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd
     ) = 0;
 
 protected:

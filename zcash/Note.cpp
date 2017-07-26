@@ -28,9 +28,9 @@ uint256 Note::cm() const {
     hasher.Write(&value_vec[0], value_vec.size());
     hasher.Write(rho.begin(), 32);
     hasher.Write(r.begin(), 32);
-		// additionally commit pkcm and tlist
+		// additionally commit pkcm and tlock
     hasher.Write(pkcm.begin(), 32);
-    hasher.Write(tlist.begin(), 32);
+    hasher.Write((unsigned char*)&tlock, sizeof(tlock));
 
     uint256 result;
     hasher.Finalize(result.begin());
@@ -51,12 +51,12 @@ NotePlaintext::NotePlaintext(
     r = note.r;
 		// modifications made by zchannel
 		pkcm = note.pkcm;
-		tlist = note.tlist;
+		tlock = note.tlock;
 }
 
 Note NotePlaintext::note(const PaymentAddress& addr) const
 {
-    return Note(addr.a_pk, value, rho, r, pkcm, tlist);
+    return Note(addr.a_pk, value, rho, r, pkcm, tlock);
 }
 
 NotePlaintext NotePlaintext::decrypt(const ZCNoteDecryption& decryptor,

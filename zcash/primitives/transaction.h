@@ -42,7 +42,7 @@ public:
 		// Index for the public key list and lock time list,
 		// indicating which of the public keys is used, and
 		// which of the lock times is used.
-		boost::array<uint64_t, ZC_NUM_JS_INPUTS> index;
+		boost::array<bool, ZC_NUM_JS_INPUTS> ovd;
 
     // JoinSplits are always anchored to a root in the note
     // commitment tree at some point in the blockchain
@@ -93,7 +93,7 @@ public:
             const uint256& pubKeyHash,
 						BHeight mbh,
 						const boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
-            const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd,
             const boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             const boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             const boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
@@ -107,7 +107,7 @@ public:
             const uint256& pubKeyHash,
 						uint64_t mbh,
             boost::array<BHeight, ZC_NUM_JS_INPUTS>& bh,
-            boost::array<uint64_t, ZC_NUM_JS_INPUTS>& index,
+            boost::array<bool, ZC_NUM_JS_INPUTS>& ovd,
             boost::array<uint256, ZC_NUM_JS_INPUTS>& anchors,
             boost::array<libzcash::JSInput, ZC_NUM_JS_INPUTS>& inputs,
             boost::array<libzcash::JSOutput, ZC_NUM_JS_OUTPUTS>& outputs,
@@ -138,7 +138,7 @@ public:
         READWRITE(anchors);
         READWRITE(mbh);
         READWRITE(bh);
-        READWRITE(index);
+        READWRITE(ovd);
         READWRITE(nullifiers);
         READWRITE(commitments);
         READWRITE(ephemeralKey);
@@ -156,7 +156,7 @@ public:
             a.anchors == b.anchors &&
 						a.mbh == b.mbh &&
 						a.bh == b.bh &&
-						a.index == b.index &&
+						a.ovd == b.ovd &&
             a.nullifiers == b.nullifiers &&
             a.commitments == b.commitments &&
             a.ephemeralKey == b.ephemeralKey &&
