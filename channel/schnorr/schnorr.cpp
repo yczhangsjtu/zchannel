@@ -23,11 +23,9 @@ SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
 	set(&e,sig.e);
 	set(&s,sig.s);
 	if(sig.buflen > 0) {
-		for(size_t i = 0; i < sig.buflen; i++) {
-			buf[i] = sig.buf[i];
-		}
-		buflen = sig.buflen;
+		buf = sig.buf;
 	}
+	buflen = sig.buflen;
 }
 
 void SchnorrSignature::set(BIGNUM **dst, BIGNUM *bn) {
@@ -204,9 +202,9 @@ size_t SchnorrSignature::toBin(unsigned char *dst) {
 	sig->r = e;
 	sig->s = s;
 	buflen = i2d_ECDSA_SIG(sig,&pbuf);
-	pbuf = buf;
+	pbuf = buf.data();
 	i2d_ECDSA_SIG(sig,&pbuf);
-	if(dst && dst != buf) {
+	if(dst && dst != buf.data()) {
 		for(size_t i = 0; i < buflen; i++)
 			dst[i] = buf[i];
 	}
@@ -233,27 +231,32 @@ SchnorrKeyPair& SchnorrKeyPair::operator=(const SchnorrKeyPair& keypair) {
 		p = EC_POINT_new(SchnorrSignature::group);
 		EC_POINT_copy(p,keypair.p);
 		if(keypair.publen > 0) {
-			for(size_t i = 0; i < keypair.publen; i++)
-				pubbuf[i] = keypair.pubbuf[i];
-			publen = keypair.publen;
+			pubbuf = keypair.pubbuf;
 		}
+		publen = keypair.publen;
 	}
 	if(keypair.a) {
 		a = BN_new();
 		BN_copy(a,keypair.a);
 		if(keypair.privlen > 0) {
-			for(size_t i = 0; i < keypair.privlen; i++)
-				privbuf[i] = keypair.privbuf[i];
 			privlen = keypair.privlen;
 		}
+		privbuf = keypair.privbuf;
 	}
 }
 
+Commitment SchnorrKeyPair::commit() {
+	if(!publen) pubToBin(NULL);
+	std::array<unsigned char,32> md;
+	SHA256(pubbuf.data(),publen,md.data());
+	return Commitment(md);
+}
+
 size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
-	unsigned char *ppubbuf = pubbuf;
+	unsigned char *ppubbuf = pubbuf.data();
 	publen = EC_POINT_point2oct(SchnorrSignature::group,p,
 			POINT_CONVERSION_UNCOMPRESSED,ppubbuf,65,SchnorrSignature::ctx);
-	if(dst && dst != pubbuf) {
+	if(dst && dst != pubbuf.data()) {
 		for(size_t i = 0; i < publen; i++)
 			dst[i] = pubbuf[i];
 	}
@@ -261,10 +264,10 @@ size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
 }
 
 size_t SchnorrKeyPair::privToBin(unsigned char *dst) {
-	unsigned char *pprivbuf = privbuf;
+	unsigned char *pprivbuf = privbuf.data();
 	privlen = BN_num_bytes(a);
 	BN_bn2bin(a,pprivbuf);
-	if(dst && dst != pubbuf) {
+	if(dst && dst != pubbuf.data()) {
 		for(size_t i = 0; i < privlen; i++)
 			dst[i] = privbuf[i];
 	}

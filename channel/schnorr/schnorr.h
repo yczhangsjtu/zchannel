@@ -7,12 +7,19 @@
 #include <string>
 #include <iostream>
 
+class Commitment {
+	std::array<unsigned char,32> digest;
+public:
+	Commitment(){}
+	Commitment(std::array<unsigned char,32> md): digest(md){}
+};
+
 class SchnorrKeyPair;
 class SchnorrSignature {
 	friend SchnorrKeyPair;
 
 	BIGNUM *e,*s;
-	unsigned char buf[70];
+	std::array<unsigned char,70> buf;
 	size_t buflen = 0;
 
 	static EC_GROUP *group;
@@ -50,8 +57,8 @@ class SchnorrKeyPair {
 	friend SchnorrSignature;
 	BIGNUM *a;
 	EC_POINT *p;
-	unsigned char pubbuf[65];
-	unsigned char privbuf[32];
+	std::array<unsigned char,65> pubbuf;
+	std::array<unsigned char,32> privbuf;
 	size_t publen = 0;
 	size_t privlen = 0;
 public:
@@ -81,6 +88,8 @@ public:
 	inline BIGNUM *getPriv() {
 		return a;
 	}
+	Commitment commit();
+	
 	inline SchnorrKeyPair pubkey() {
 		return SchnorrKeyPair(NULL,p);
 	}
