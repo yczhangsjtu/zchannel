@@ -28,16 +28,25 @@ public: note_commitment_gadget(
 						pb_variable_array<FieldT> first_of_rho(rho.begin(), rho.begin()+184);
 						pb_variable_array<FieldT> last_of_rho(rho.begin()+184, rho.end());
 
-						pb_variable_array<FieldT> first_of_pkcm(pkcm.begin(), pkcm.end()+184);
+						pb_variable_array<FieldT> first_of_pkcm(pkcm.begin(), pkcm.begin()+184);
 						pb_variable_array<FieldT> last_of_pkcm(pkcm.begin()+184, pkcm.end());
 
 						cm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, ""));
+						cm_intermediate_hash2.reset(new digest_variable<FieldT>(pb, 256, ""));
 
 						// final padding
 						pb_variable_array<FieldT> length_padding =
 							from_bits({
 									// padding (39 bytes)
 									1,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
+									0,0,0,0,0,0,0,0,
 									0,0,0,0,0,0,0,0,
 									0,0,0,0,0,0,0,0,
 									0,0,0,0,0,0,0,0,
@@ -86,17 +95,22 @@ public: note_commitment_gadget(
 									v,
 									first_of_rho
 									}, ""));
+						assert(leading_byte.size() + a_pk.size() + v.size() + first_of_rho.size() == 512);
 
 						cm_block2.reset(new block_variable<FieldT>(pb, {
 									last_of_rho,
 									r,
 									first_of_pkcm
 									}, ""));
+						assert(last_of_rho.size()+r.size()+first_of_pkcm.size() == 512);
+
 						cm_block3.reset(new block_variable<FieldT>(pb, {
 									last_of_pkcm,
 									tlock,
 									length_padding	
 									}, ""));
+
+						assert(last_of_pkcm.size()+tlock.size()+length_padding.size()==512);
 
 						pb_linear_combination_array<FieldT> IV = SHA256_default_IV(pb);
 
@@ -129,7 +143,7 @@ public: note_commitment_gadget(
     void generate_r1cs_constraints() {
         cm_hasher1->generate_r1cs_constraints();
         cm_hasher2->generate_r1cs_constraints();
-        cm_hasher1->generate_r1cs_constraints();
+        cm_hasher3->generate_r1cs_constraints();
     }
 
     void generate_r1cs_witness() {
@@ -165,11 +179,22 @@ public:
 			pb_variable_array<FieldT> leading_byte =
 				from_bits({1, 0, 1, 1}, ZERO);
 
+			pkcm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, ""));
+			pkcm.reset(new digest_variable<FieldT>(pb,256,""));
+
 			// final padding
 			pb_variable_array<FieldT> length_padding =
 				from_bits({
 						// padding (56 bytes)
 						1,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
+						0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,
 						0,0,0,0,0,0,0,0,
@@ -228,11 +253,13 @@ public:
 						0,0,0,0,0,0,1,0,
 						0,0,0,0,0,0,0,0
 				}, ZERO);
+
 			pkcm_block1.reset(new block_variable<FieldT>(pb, {
 						leading_byte,
 						pkh,
 						a_sk
 						}, ""));
+
 			pkcm_block2.reset(new block_variable<FieldT>(pb, {
 						length_padding
 						}, ""));
@@ -254,6 +281,7 @@ public:
 						pkcm_block2->bits,
 						*pkcm,
 						""));
+
 			note_gadget.reset(new note_commitment_gadget<FieldT>(
 						pb,
 						ZERO,
@@ -270,9 +298,11 @@ public:
     void generate_r1cs_constraints() {
         pkcm_hasher1->generate_r1cs_constraints();
         pkcm_hasher2->generate_r1cs_constraints();
+        note_gadget->generate_r1cs_constraints();
 		}
     void generate_r1cs_witness() {
         pkcm_hasher1->generate_r1cs_witness();
         pkcm_hasher2->generate_r1cs_witness();
+        note_gadget->generate_r1cs_witness();
 		}
 };

@@ -112,6 +112,12 @@ class joinsplit_gadget : gadget<FieldT> {
 			zk_total_uint64.allocate(pb, 64);
 
 			for (size_t i = 0; i < NumInputs; i++) {
+
+				// For ZChannel
+				tlock64[i].allocate(pb,64);
+				ladd64[i].allocate(pb,64);
+				radd64[i].allocate(pb,64);
+
 				// Input note gadget for commitments, macs, nullifiers,
 				// and spend authority.
 				zk_input_notes[i].reset(new input_note_gadget<FieldT>(
@@ -133,11 +139,6 @@ class joinsplit_gadget : gadget<FieldT> {
 							i ? true : false,
 							zk_input_macs[i]
 							));
-
-				// For ZChannel
-				tlock64[i].allocate(pb,64);
-				ladd64[i].allocate(pb,64);
-				radd64[i].allocate(pb,64);
 
 			}
 			// mbh.allocate(pb);
