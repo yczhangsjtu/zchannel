@@ -292,14 +292,3 @@ std::string SchnorrKeyPair::privToHex() {
 	}
 	return std::string(hexbuf);
 }
-
-int main() {
-	const unsigned char *msg = (const unsigned char*)"abc";
-	size_t msglen = strlen((const char*)msg);
-	SchnorrKeyPair keypair = SchnorrSignature::keygen();
-	keypair.print();
-	SchnorrSignature sig = SchnorrSignature::sign(msg,msglen,keypair.getPriv());
-	std::cout << sig.toHex() << std::endl;
-	std::cout << sig.verify(msg,msglen,keypair.getPub()) << std::endl;
-	return 0;
-}

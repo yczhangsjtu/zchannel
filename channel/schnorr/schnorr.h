@@ -1,3 +1,6 @@
+#ifndef __SCHNORR_H__
+#define __SCHNORR_H__
+
 #include <mutex>
 #include <openssl/ec.h>
 #include <openssl/bn.h>
@@ -93,3 +96,5 @@ public:
 		std::cout << "priv key:" << privToHex() << std::endl;
 	}
 };
+
+#endif

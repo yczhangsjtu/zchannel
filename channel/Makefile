@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-pc-linux-gnu
 host_triplet = x86_64-pc-linux-gnu
-bin_PROGRAMS = testschnorr$(EXEEXT)
+bin_PROGRAMS = dkg$(EXEEXT)
 subdir = channel
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -107,10 +107,10 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_testschnorr_OBJECTS = schnorr/schnorr.$(OBJEXT)
-testschnorr_OBJECTS = $(am_testschnorr_OBJECTS)
+am_dkg_OBJECTS = schnorr/dkg.$(OBJEXT) schnorr/schnorr.$(OBJEXT)
+dkg_OBJECTS = $(am_dkg_OBJECTS)
 am__DEPENDENCIES_1 =
-testschnorr_DEPENDENCIES = $(am__DEPENDENCIES_1)
+dkg_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -140,8 +140,8 @@ AM_V_CXXLD = $(am__v_CXXLD_$(V))
 am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(testschnorr_SOURCES)
-DIST_SOURCES = $(testschnorr_SOURCES)
+SOURCES = $(dkg_SOURCES)
+DIST_SOURCES = $(dkg_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -279,8 +279,8 @@ top_srcdir = ..
 OPTIONS = -std=c++11 -ggdb
 ADDLIBS = -lcrypto
 AM_CPPFLAGS = $(OPTIONS)
-testschnorr_SOURCES = schnorr/schnorr.cpp
-testschnorr_LDADD = $(ADDLIBS)
+dkg_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp
+dkg_LDADD = $(ADDLIBS)
 all: all-am
 
 .SUFFIXES:
@@ -362,12 +362,14 @@ schnorr/$(am__dirstamp):
 schnorr/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) schnorr/$(DEPDIR)
 	@: > schnorr/$(DEPDIR)/$(am__dirstamp)
+schnorr/dkg.$(OBJEXT): schnorr/$(am__dirstamp) \
+	schnorr/$(DEPDIR)/$(am__dirstamp)
 schnorr/schnorr.$(OBJEXT): schnorr/$(am__dirstamp) \
 	schnorr/$(DEPDIR)/$(am__dirstamp)
 
-testschnorr$(EXEEXT): $(testschnorr_OBJECTS) $(testschnorr_DEPENDENCIES) $(EXTRA_testschnorr_DEPENDENCIES) 
-	@rm -f testschnorr$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(testschnorr_OBJECTS) $(testschnorr_LDADD) $(LIBS)
+dkg$(EXEEXT): $(dkg_OBJECTS) $(dkg_DEPENDENCIES) $(EXTRA_dkg_DEPENDENCIES) 
+	@rm -f dkg$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(dkg_OBJECTS) $(dkg_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -376,6 +378,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include schnorr/$(DEPDIR)/dkg.Po
 include schnorr/$(DEPDIR)/schnorr.Po
 
 .cpp.o:

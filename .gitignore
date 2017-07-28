@@ -1,5 +1,5 @@
 /demo/circuit
-/channel/testschnorr
+/channel/dkg
 
 *.o
 .deps
