@@ -295,6 +295,13 @@ public:
 										left_side,
 										right_side
 								));
+
+								// Ensure that either ovd = 0 or radd = 0
+								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
+										packed_addition(ovd64[i]),
+										packed_addition(radd64[i]),
+										0 * ONE
+								));
 						}
 				}
     }
