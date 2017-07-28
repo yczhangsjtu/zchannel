@@ -1,8 +1,10 @@
 /demo/circuit
-/channel/schnorr
+/channel/testschnorr
 
 *.o
 .deps
+
+tags
 
 /Makefile
 /Makefile.in
