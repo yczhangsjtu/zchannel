@@ -21,6 +21,7 @@ class joinsplit_gadget : gadget<FieldT> {
 		pb_variable_array<FieldT> zk_vpub_new;
 
 		// Verifier inputs for zchannel
+		boost::array<std::shared_ptr<digest_variable<FieldT>>, NumInputs> zk_pkh;
 		boost::array<pb_variable_array<FieldT>, NumInputs> bh64;
 		boost::array<pb_variable_array<FieldT>, NumInputs> ovd64;
 		pb_variable_array<FieldT> mbh64;
@@ -34,12 +35,6 @@ class joinsplit_gadget : gadget<FieldT> {
 		boost::array<pb_variable_array<FieldT>, NumInputs> tlock64;
 		boost::array<pb_variable_array<FieldT>, NumInputs> ladd64;
 		boost::array<pb_variable_array<FieldT>, NumInputs> radd64;
-
-		// boost::array<pb_variable<FieldT>, NumInputs> tlock;
-		// boost::array<pb_variable<FieldT>, NumInputs> bh;
-		// boost::array<pb_variable<FieldT>, NumInputs> ovd;
-		// boost::array<pb_variable<FieldT>, NumInputs> diff;
-		// pb_variable<FieldT> mbh;
 
 		// Input note gadgets
 		boost::array<std::shared_ptr<input_note_gadget<FieldT>>, NumInputs> zk_input_notes;
@@ -76,6 +71,7 @@ class joinsplit_gadget : gadget<FieldT> {
 					alloc_uint256(zk_unpacked_inputs, zk_input_macs[i]);
 
 					// ZChannel part
+					alloc_uint256(zk_unpacked_inputs, zk_pkh[i]);
 					alloc_uint64(zk_unpacked_inputs, bh64[i]);
 					alloc_uint64(zk_unpacked_inputs, ovd64[i]);
 				}
@@ -122,6 +118,7 @@ class joinsplit_gadget : gadget<FieldT> {
 							pb,
 							ZERO,
 							zk_input_nullifiers[i],
+							zk_pkh[i],
 							*zk_merkle_root[i]
 							));
 
@@ -369,6 +366,11 @@ class joinsplit_gadget : gadget<FieldT> {
 					);
 
 			for (size_t i = 0; i < NumInputs; i++) {
+				// Witness pkh
+				zk_pkh[i]->bits.fill_with_bits(
+						this->pb,
+						uint256_to_bool_vector(inputs[i].note.pkh)
+						);
 				// Witness the input information.
 				auto merkle_path = inputs[i].witness.path();
 				zk_input_notes[i]->generate_r1cs_witness(
@@ -442,6 +444,7 @@ class joinsplit_gadget : gadget<FieldT> {
 				insert_uint256(verify_inputs, nullifiers[i]);
 				insert_uint256(verify_inputs, macs[i]);
 				// ZChannel
+				insert_uint256(verify_inputs, pkh[i]);
 				insert_uint64(verify_inputs, bh[i]);
 				insert_uint64(verify_inputs, ovd[i]?0:1);
 			}
@@ -468,6 +471,7 @@ class joinsplit_gadget : gadget<FieldT> {
 			for (size_t i = 0; i < NumInputs; i++) {
 				acc += 256; // the merkle root (anchor)
 				acc += 256; // nullifier
+				acc += 256; // pkh
 				acc += 256; // mac
 				acc += 64; // block height
 				acc += 64; // ovd flag

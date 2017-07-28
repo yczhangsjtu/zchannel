@@ -49,6 +49,7 @@ public:
         protoboard<FieldT>& pb,
         pb_variable<FieldT>& ZERO,
         std::shared_ptr<digest_variable<FieldT>> nullifier,
+        std::shared_ptr<digest_variable<FieldT>> pkh,
         digest_variable<FieldT> rt
     ) : note_gadget<FieldT>(pb) {
         a_sk.reset(new digest_variable<FieldT>(pb, 252, ""));
