@@ -32,11 +32,14 @@ private:
 
 		// Aux inputs for zchannel
 		boost::array<pb_variable_array<FieldT>, NumInputs> tlock64;
+		boost::array<pb_variable_array<FieldT>, NumInputs> ladd64;
+		boost::array<pb_variable_array<FieldT>, NumInputs> radd64;
 
-		boost::array<pb_variable<FieldT>, NumInputs> tlock;
-		boost::array<pb_variable<FieldT>, NumInputs> bh;
-		boost::array<pb_variable<FieldT>, NumInputs> ovd;
-    pb_variable<FieldT> mbh;
+		// boost::array<pb_variable<FieldT>, NumInputs> tlock;
+		// boost::array<pb_variable<FieldT>, NumInputs> bh;
+		// boost::array<pb_variable<FieldT>, NumInputs> ovd;
+		// boost::array<pb_variable<FieldT>, NumInputs> diff;
+    // pb_variable<FieldT> mbh;
 
     // Input note gadgets
     boost::array<std::shared_ptr<input_note_gadget<FieldT>>, NumInputs> zk_input_notes;
@@ -135,12 +138,15 @@ public:
 
 						// For ZChannel
 						tlock64[i].allocate(pb,64);
+						ladd64[i].allocate(pb,64);
+						radd64[i].allocate(pb,64);
 
-						tlock[i].allocate(pb);
-						ovd[i].allocate(pb);
-						bh[i].allocate(pb);
+						// tlock[i].allocate(pb);
+						// ovd[i].allocate(pb);
+						// diff[i].allocate(pb);
+						// bh[i].allocate(pb);
         }
-				mbh.allocate(pb);
+				// mbh.allocate(pb);
 
         for (size_t i = 0; i < NumOutputs; i++) {
             zk_output_notes[i].reset(new output_note_gadget<FieldT>(
@@ -215,13 +221,14 @@ public:
 
 				// Time Lock
 				{
-						this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
-								1,
-								mbh,
-								packed_addition(mbh64)
-						));
-						generate_r1cs_equals_const_constraint<FieldT>(this->pb, mbh64[0], FieldT::zero(), "ZERO");
-						for (size_t i = 1; i < 64; i++) {
+						// MSB is stored at position 56 (because bytes are stored in little endian,
+						// but in each byte the bits are stored in big endian!!)
+						// Likewise, LSB is stored at position 7
+						const size_t MSB_POS = 56;
+						const size_t LSB_POS = 7;
+						// MSB is constrained to 0: mbh < 2^63
+						generate_r1cs_equals_const_constraint<FieldT>(this->pb, mbh64[MSB_POS], FieldT::zero(), "ZERO");
+						for (size_t i = 0; i < 64; i++) {
 								generate_boolean_r1cs_constraint<FieldT>(
 										this->pb,
 										mbh64[i],
@@ -229,29 +236,65 @@ public:
 								);
 						}
 						for (size_t i = 0; i < NumInputs; i++) {
-								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
-										1,
-										ovd[i],
-										packed_addition(ovd64[i])
-								));
-                generate_boolean_r1cs_constraint<FieldT>(
-                    this->pb,
-                    ovd[i],
-                    ""
-                );
-								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
-										1,
-										bh[i],
-										packed_addition(bh64[i])
-								));
-								generate_r1cs_equals_const_constraint<FieldT>(this->pb, bh64[i][0], FieldT::zero(), "ZERO");
-								for (size_t j = 1; j < 64; j++) {
+								// OVD is contrained to 0 or 1
+								generate_boolean_r1cs_constraint<FieldT>(this->pb, ovd64[i][LSB_POS], "ZERO");
+								for (size_t j = 0; j < 64; j++) {
+										if(j != LSB_POS) {
+												generate_r1cs_equals_const_constraint<FieldT>(
+														this->pb,
+														ovd64[i][j], FieldT::zero(),
+														""
+												);
+										}
+								}
+								// bh < 2^63
+								generate_r1cs_equals_const_constraint<FieldT>(this->pb, bh64[i][MSB_POS], FieldT::zero(), "ZERO");
+								for (size_t j = 0; j < 64; j++) {
 										generate_boolean_r1cs_constraint<FieldT>(
 												this->pb,
 												bh64[i][j],
 												""
 										);
 								}
+								// tlock < 2^63
+								generate_r1cs_equals_const_constraint<FieldT>(this->pb, tlock64[i][MSB_POS], FieldT::zero(), "ZERO");
+								for (size_t j = 0; j < 64; j++) {
+										generate_boolean_r1cs_constraint<FieldT>(
+												this->pb,
+												tlock64[i][j],
+												""
+										);
+								}
+								// ladd < 2^63
+								generate_r1cs_equals_const_constraint<FieldT>(this->pb, ladd64[i][MSB_POS], FieldT::zero(), "ZERO");
+								for (size_t j = 0; j < 64; j++) {
+										generate_boolean_r1cs_constraint<FieldT>(
+												this->pb,
+												ladd64[i][j],
+												""
+										);
+								}
+								// ladd < 2^63
+								generate_r1cs_equals_const_constraint<FieldT>(this->pb, radd64[i][MSB_POS], FieldT::zero(), "ZERO");
+								for (size_t j = 0; j < 64; j++) {
+										generate_boolean_r1cs_constraint<FieldT>(
+												this->pb,
+												radd64[i][j],
+												""
+										);
+								}
+								linear_combination<FieldT> left_side = packed_addition(bh64[i]);
+								left_side = left_side + packed_addition(tlock64[i]);
+
+								linear_combination<FieldT> right_side = packed_addition(mbh64);
+								right_side = right_side + packed_addition(radd64[i]);
+
+								// Ensure that both sides are equal
+								this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
+										1,
+										left_side,
+										right_side
+								));
 						}
 				}
     }
