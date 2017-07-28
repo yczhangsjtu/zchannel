@@ -149,14 +149,14 @@ public:
         const uint256& randomSeed,
         const boost::array<uint256, NumInputs>& macs,
         const boost::array<uint256, NumInputs>& nullifiers,
-        const boost::array<uint256, NumInputs>& pkh, // to be handled
+        const boost::array<uint256, NumInputs>& pkh,
         const boost::array<uint256, NumOutputs>& commitments,
         uint64_t vpub_old,
         uint64_t vpub_new,
         const boost::array<uint256, NumInputs>& anchors,
-				uint64_t mbh, // to be handled
-				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh, // to be handled
-				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd // to be handled
+				uint64_t mbh,
+				const boost::array<uint64_t, ZC_NUM_JS_INPUTS>& bh,
+				const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd
     ) {
         if (!vk || !vk_precomp) {
             throw std::runtime_error("JoinSplit verifying key not loaded");
@@ -172,9 +172,13 @@ public:
                 h_sig,
                 macs,
                 nullifiers,
+								pkh,
                 commitments,
                 vpub_old,
-                vpub_new
+                vpub_new,
+								mbh,
+								bh,
+								ovd
             );
 
             return verifier.check(
