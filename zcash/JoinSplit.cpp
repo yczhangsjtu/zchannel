@@ -135,6 +135,7 @@ public:
         LOCK(cs_LoadKeys);
 
         const r1cs_constraint_system<FieldT> constraint_system = generate_r1cs();
+
         r1cs_ppzksnark_keypair<ppzksnark_ppT> keypair = r1cs_ppzksnark_generator<ppzksnark_ppT>(constraint_system);
 
         pk = keypair.pk;

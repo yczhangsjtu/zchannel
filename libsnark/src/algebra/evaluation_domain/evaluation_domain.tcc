@@ -22,6 +22,7 @@
 #include <cassert>
 #include "algebra/fields/field_utils.hpp"
 #include "algebra/evaluation_domain/domains/basic_radix2_domain.hpp"
+#include "algebra/evaluation_domain/domains/step_radix2_domain.hpp"
 
 namespace libsnark {
 
@@ -82,7 +83,7 @@ std::shared_ptr<evaluation_domain<FieldT> > get_evaluation_domain(const size_t m
             {
                 print_indent(); printf("* Selected domain: step_radix2\n");
             }
-            assert(0);
+            result.reset(new step_radix2_domain<FieldT>(big + rounded_small));
         }
     }
 
