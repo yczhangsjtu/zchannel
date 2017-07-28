@@ -34,7 +34,7 @@ private:
     std::shared_ptr<digest_variable<FieldT>> rho;
 
     std::shared_ptr<digest_variable<FieldT>> commitment;
-    std::shared_ptr<note_commitment_gadget<FieldT>> commit_to_inputs;
+    std::shared_ptr<input_note_commitment_gadget<FieldT>> commit_to_inputs;
 
     pb_variable<FieldT> value_enforce;
     std::shared_ptr<merkle_tree_gadget<FieldT>> witness_input;
@@ -43,13 +43,13 @@ private:
     std::shared_ptr<PRF_nf_gadget<FieldT>> expose_nullifiers;
 public:
     std::shared_ptr<digest_variable<FieldT>> a_sk;
-		pb_variable_array<FieldT> tlist;
 
     input_note_gadget(
         protoboard<FieldT>& pb,
         pb_variable<FieldT>& ZERO,
         std::shared_ptr<digest_variable<FieldT>> nullifier,
         std::shared_ptr<digest_variable<FieldT>> pkh,
+				pb_variable_array<FieldT>& tlock,
         digest_variable<FieldT> rt
     ) : note_gadget<FieldT>(pb) {
         a_sk.reset(new digest_variable<FieldT>(pb, 252, ""));
@@ -72,13 +72,16 @@ public:
             nullifier
         ));
 
-        commit_to_inputs.reset(new note_commitment_gadget<FieldT>(
+        commit_to_inputs.reset(new input_note_commitment_gadget<FieldT>(
             pb,
             ZERO,
             a_pk->bits,
+            this->a_sk->bits,
             this->value,
             rho->bits,
             this->r->bits,
+						pkh->bits,
+						tlock,
             commitment
         ));
 
@@ -90,8 +93,6 @@ public:
             rt,
             value_enforce
         ));
-
-				tlist.allocate(pb,256);
     }
 
     void generate_r1cs_constraints() {
@@ -174,9 +175,11 @@ class output_note_gadget : public note_gadget<FieldT> {
 private:
     std::shared_ptr<digest_variable<FieldT>> rho;
     std::shared_ptr<digest_variable<FieldT>> a_pk;
+    std::shared_ptr<digest_variable<FieldT>> pkcm;
 
     std::shared_ptr<PRF_rho_gadget<FieldT>> prevent_faerie_gold;
     std::shared_ptr<note_commitment_gadget<FieldT>> commit_to_outputs;
+		pb_variable_array<FieldT> tlock;
 
 public:
     output_note_gadget(
@@ -189,6 +192,8 @@ public:
     ) : note_gadget<FieldT>(pb) {
         rho.reset(new digest_variable<FieldT>(pb, 256, ""));
         a_pk.reset(new digest_variable<FieldT>(pb, 256, ""));
+				pkcm.reset(new digest_variable<FieldT>(pb, 256, ""));
+				tlock.allocate(pb,64);
 
         // Do not allow the caller to choose the same "rho"
         // for any two valid notes in a given view of the
@@ -212,6 +217,8 @@ public:
             this->value,
             rho->bits,
             this->r->bits,
+						this->pkcm->bits,
+						this->tlock,
             commitment
         ));
     }
@@ -242,6 +249,16 @@ public:
             this->pb,
             uint256_to_bool_vector(note.a_pk)
         );
+
+				pkcm->bits.fill_with_bits(
+						this->pb,
+						uint256_to_bool_vector(note.pkcm)
+				);
+
+				tlock.fill_with_bits(
+						this->pb,
+						uint64_to_bool_vector(note.tlock)
+				);
 
         commit_to_outputs->generate_r1cs_witness();
     }

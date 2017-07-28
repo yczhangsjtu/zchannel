@@ -119,6 +119,7 @@ class joinsplit_gadget : gadget<FieldT> {
 							ZERO,
 							zk_input_nullifiers[i],
 							zk_pkh[i],
+							tlock64[i],
 							*zk_merkle_root[i]
 							));
 
@@ -138,10 +139,6 @@ class joinsplit_gadget : gadget<FieldT> {
 				ladd64[i].allocate(pb,64);
 				radd64[i].allocate(pb,64);
 
-				// tlock[i].allocate(pb);
-				// ovd[i].allocate(pb);
-				// diff[i].allocate(pb);
-				// bh[i].allocate(pb);
 			}
 			// mbh.allocate(pb);
 
@@ -410,6 +407,10 @@ class joinsplit_gadget : gadget<FieldT> {
 				bh64[i].fill_with_bits(
 						this->pb,
 						uint64_to_bool_vector(bh[i])
+						);
+				tlock64[i].fill_with_bits(
+						this->pb,
+						uint64_to_bool_vector(inputs[i].note.tlock)
 						);
 			}
 			mbh64.fill_with_bits(
