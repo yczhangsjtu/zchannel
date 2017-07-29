@@ -413,6 +413,25 @@ class joinsplit_gadget : gadget<FieldT> {
 						this->pb,
 						uint64_to_bool_vector(inputs[i].note.tlock)
 						);
+				if(bh[i]+inputs[i].note.tlock < mbh) {
+					ladd64[i].fill_with_bits(
+							this->pb,
+							uint64_to_bool_vector(mbh-bh[i]-inputs[i].note.tlock)
+							);
+					radd64[i].fill_with_bits(
+							this->pb,
+							uint64_to_bool_vector(0)
+							);
+				} else {
+					ladd64[i].fill_with_bits(
+							this->pb,
+							uint64_to_bool_vector(0)
+							);
+					radd64[i].fill_with_bits(
+							this->pb,
+							uint64_to_bool_vector(bh[i]+inputs[i].note.tlock-mbh)
+							);
+				}
 			}
 			mbh64.fill_with_bits(
 					this->pb,

@@ -12,7 +12,7 @@ else
 	
 	if [ "$1" == "dbg" ]; then
 		echo "Saving pk vk r1cs to /tmp"
-		LD_LIBRARY_PATH=`pwd`/secp256k1/.libs gdb -q --args ./generate /tmp/pk /tmp/vk /tmp/r1cs
+		LD_LIBRARY_PATH=`pwd`/secp256k1/.libs gdb -q --args ./createjs /tmp/pk /tmp/vk
 	fi
 
 	if [ "$1" == "js" ]; then

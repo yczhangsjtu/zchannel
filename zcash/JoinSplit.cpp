@@ -458,6 +458,7 @@ namespace libzcash {
 	JSInput::JSInput() : witness(ZCIncrementalMerkleTree().witness()),
 	key(SpendingKey::random()) {
 		note = Note(key.address().a_pk, 0, random_uint256(), random_uint256());
+		note.pkcm = note.getPkcm(this->key);
 		ZCIncrementalMerkleTree dummy_tree;
 		dummy_tree.append(note.cm());
 		witness = dummy_tree.witness();

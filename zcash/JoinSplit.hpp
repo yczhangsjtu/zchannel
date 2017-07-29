@@ -24,7 +24,9 @@ public:
     JSInput();
     JSInput(ZCIncrementalWitness witness,
             Note note,
-            SpendingKey key) : witness(witness), note(note), key(key) { }
+            SpendingKey key) : witness(witness), note(note), key(key) {
+			note.pkcm = note.getPkcm(key);
+		}
 
     uint256 nullifier() const {
         return note.nullifier(key);

@@ -24,8 +24,6 @@ JSDescription::JSDescription(ZCJoinSplit& params,
 	  mbh(mbh), bh(bh), ovd(ovd)
 {
     boost::array<libzcash::Note, ZC_NUM_JS_OUTPUTS> notes;
-		for(size_t i = 0; i < ZC_NUM_JS_INPUTS; i++)
-			notes[i].pkcm = notes[i].getPkcm(inputs[i].key);
 
     if (computeProof) {
         params.loadProvingKey();
