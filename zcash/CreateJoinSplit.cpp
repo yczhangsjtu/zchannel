@@ -32,6 +32,7 @@ int main(int argc, char **argv)
 		uint256 pubKeyHash;
 		BHeight BH1,BH2,MBH;
 		bool ovd1,ovd2;
+		MBH = 1000;
 
 		JSDescription jsdesc(*p,
 												 pubKeyHash,

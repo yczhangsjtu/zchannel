@@ -1,3 +1,4 @@
+#include "sodium.h"
 #include "Note.hpp"
 #include "prf.h"
 #include "crypto/sha256.h"
@@ -36,6 +37,16 @@ uint256 Note::cm() const {
     hasher.Finalize(result.begin());
 
     return result;
+}
+
+uint256 Note::getPkcm(const uint252& ask) const {
+	std::vector<unsigned char> block(512);
+	block.insert(block.end(),ask.begin(),ask.end());
+	block.insert(block.end(),pkh.begin(),pkh.end());
+	uint256 output;
+	if(crypto_hash_sha256(output.begin(),&block[0],block.size()) != 0)
+		throw std::logic_error("pkcm failure");
+	return output;
 }
 
 uint256 Note::nullifier(const SpendingKey& a_sk) const {

@@ -25,9 +25,11 @@ public:
 		uint256 pkh;
 
     Note(uint256 a_pk, uint64_t value, uint256 rho, uint256 r,
-				uint256 pkcm = 0, uint64_t tlock = 0, uint256 pkh = 0)
+				uint256 pkcm = uint256(), uint64_t tlock = 0, uint256 pkh = uint256())
         : a_pk(a_pk), value(value), rho(rho), r(r),
 				  pkcm(pkcm), tlock(tlock), pkh(pkh) {}
+
+    uint256 getPkcm(const uint252& ask) const;
 
     Note();
 
