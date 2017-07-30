@@ -16,6 +16,10 @@ EC_GROUP *SchnorrSignature::group;
 BIGNUM *SchnorrSignature::n;
 BN_CTX *SchnorrSignature::ctx;
 std::once_flag SchnorrSignature::initflag;
+EC_GROUP *SchnorrKeyPair::group;
+BIGNUM *SchnorrKeyPair::n;
+BN_CTX *SchnorrKeyPair::ctx;
+std::once_flag SchnorrKeyPair::initflag;
 
 SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
 	if(e) BN_free(e);
@@ -27,6 +31,17 @@ SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
 		buf = sig.buf;
 	}
 	buflen = sig.buflen;
+}
+
+SchnorrSignature SchnorrSignature::operator+(const SchnorrSignature& rh) const {
+	assert(e); assert(rh.e);
+	assert(s); assert(rh.s);
+	SchnorrSignature res;
+	res.e = BN_new();
+	res.s = BN_new();
+	BN_add(res.e,e,rh.e);
+	BN_add(res.s,s,rh.s);
+	return res;
 }
 
 void SchnorrSignature::set(BIGNUM **dst, BIGNUM *bn) {
@@ -45,10 +60,14 @@ void SchnorrSignature::initSchnorr() {
 	group = EC_GROUP_new_by_curve_name(NID_secp256k1);
 
 	EC_GROUP_get_order(group,n,ctx);
+
+	SchnorrKeyPair::group = group;
+	SchnorrKeyPair::n = n;
+	SchnorrKeyPair::ctx = ctx;
 }
 
-SchnorrKeyPair SchnorrSignature::keygen() {
-	std::call_once(initflag,initSchnorr);
+SchnorrKeyPair SchnorrKeyPair::keygen() {
+	std::call_once(initflag,SchnorrSignature::initSchnorr);
 	EC_POINT *p = EC_POINT_new(group);
 	BIGNUM *a = BN_new();
 	BN_rand_range(a,n);
@@ -56,8 +75,8 @@ SchnorrKeyPair SchnorrSignature::keygen() {
 	return SchnorrKeyPair(a,p);
 }
 
-SchnorrSignature SchnorrSignature::sign(const unsigned char *msg, size_t msglen, BIGNUM *a) {
-	std::call_once(initflag,initSchnorr);
+SchnorrSignature SchnorrKeyPair::sign(const unsigned char *msg, size_t msglen) const {
+	std::call_once(initflag,SchnorrSignature::initSchnorr);
 
 	int res = 0;
 	BIGNUM *k = NULL;
@@ -141,7 +160,7 @@ error:
 	return sig;
 }
 
-bool SchnorrSignature::verify(const unsigned char *msg, size_t msglen, EC_POINT *p) {
+bool SchnorrKeyPair::verify(const unsigned char *msg, size_t msglen, const SchnorrSignature &sig) const {
 	int res = 0;
 	bool ret;
 	BIGNUM *ev = NULL;
@@ -174,7 +193,7 @@ bool SchnorrSignature::verify(const unsigned char *msg, size_t msglen, EC_POINT 
 	}
 
 	// Start verification
-	EC_POINT_mul(group,kG,s,p,e,ctx);
+	EC_POINT_mul(group,kG,sig.s,p,sig.e,ctx);
 	EC_POINT_get_affine_coordinates_GFp(group,kG,x0,y0,ctx);
 	x0len = BN_num_bytes(x0);
 	BN_bn2bin(x0,x0bin);
@@ -184,7 +203,7 @@ bool SchnorrSignature::verify(const unsigned char *msg, size_t msglen, EC_POINT 
 	SHA256_Update(&sha256,msg,msglen);
 	SHA256_Final(ebin,&sha256);
 	BN_bin2bn(ebin,32,ev);
-	ret = BN_cmp(e,ev) == 0;
+	ret = BN_cmp(sig.e,ev) == 0;
 	res = 1;
 error:
 	if(!res) {

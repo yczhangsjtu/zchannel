@@ -6,6 +6,19 @@
 
 #include "schnorr.h"
 
+class SharedSignature {
+	SchnorrSignature signature;
+public:
+	SharedSignature(){}
+	SharedSignature(const SchnorrSignature& sig):signature(sig){}
+	SharedSignature(const SharedSignature& sig):signature(sig.signature){}
+	inline void setSignature(const SchnorrSignature& sig){signature=sig;}
+	inline SchnorrSignature getSignature(){return signature;}
+	inline SchnorrSignature operator+(const SharedSignature& rh) const {
+		return signature+rh.signature;
+	}
+};
+
 class SharedKeyPair {
 	SchnorrKeyPair keypair;
 	SchnorrKeyPair sharedPubkey;
@@ -30,16 +43,8 @@ public:
 	inline SchnorrKeyPair getSharedPubkey() {
 		return sharedPubkey;
 	}
-};
 
-class SharedSignature {
-	SchnorrSignature signature;
-public:
-	SharedSignature(){}
-	SharedSignature(const SchnorrSignature& sig):signature(sig){}
-	SharedSignature(const SharedSignature& sig):signature(sig.signature){}
-	inline void setSignature(const SchnorrSignature& sig){signature=sig;}
-	inline SchnorrSignature getSignature(){return signature;}
+	SharedSignature sign(const unsigned char *md, size_t len, const SharedKeyPair &aux) const;
 };
 
 class PubkeyOrCommitment {

@@ -41,14 +41,12 @@ public:
 	SchnorrSignature(const SchnorrSignature& sig): SchnorrSignature(sig.e,sig.s) {
 	}
 	SchnorrSignature& operator=(const SchnorrSignature& sig);
+	SchnorrSignature operator+(const SchnorrSignature& rh) const;
 	~SchnorrSignature(){
 		if(e) BN_free(e);
 		if(s) BN_free(s);
 	}
 
-	static SchnorrKeyPair keygen();
-	static SchnorrSignature sign(const unsigned char *msg, size_t msglen, BIGNUM *a);
-	bool verify(const unsigned char *msg, size_t msglen, EC_POINT *p);
 	size_t toBin(unsigned char *dst);
 	std::string toHex();
 };
@@ -61,6 +59,11 @@ class SchnorrKeyPair {
 	std::array<unsigned char,32> privbuf;
 	size_t publen = 0;
 	size_t privlen = 0;
+
+	static std::once_flag initflag;
+	static EC_GROUP *group;
+	static BIGNUM *n;
+	static BN_CTX *ctx;
 public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
 	SchnorrKeyPair(BIGNUM *_a,EC_POINT *_p){
@@ -126,6 +129,9 @@ public:
 	inline SchnorrKeyPair privkey() {
 		return SchnorrKeyPair(a,NULL);
 	}
+	static SchnorrKeyPair keygen();
+	SchnorrSignature sign(const unsigned char *msg, size_t msglen) const;
+	bool verify(const unsigned char *msg, size_t msglen, const SchnorrSignature &sig) const;
 	size_t pubToBin(unsigned char* dst);
 	size_t privToBin(unsigned char* dst);
 	std::string pubToHex();
