@@ -4,8 +4,11 @@
 #include <mutex>
 #include <openssl/ec.h>
 #include <openssl/bn.h>
+#include <openssl/sha.h>
 #include <string>
 #include <iostream>
+
+#include "digest.h"
 
 class Commitment {
 	std::array<unsigned char,32> digest;
@@ -23,7 +26,7 @@ class SchnorrSignature {
 	size_t buflen = 0;
 
 	static EC_GROUP *group;
-	static BIGNUM *n;
+	static BIGNUM *order;
 	static BN_CTX *ctx;
 	static std::once_flag initflag;
 
@@ -62,7 +65,7 @@ class SchnorrKeyPair {
 
 	static std::once_flag initflag;
 	static EC_GROUP *group;
-	static BIGNUM *n;
+	static BIGNUM *order;
 	static BN_CTX *ctx;
 public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
@@ -130,8 +133,10 @@ public:
 		return SchnorrKeyPair(a,NULL);
 	}
 	static SchnorrKeyPair keygen();
-	SchnorrSignature sign(const unsigned char *msg, size_t msglen) const;
-	bool verify(const unsigned char *msg, size_t msglen, const SchnorrSignature &sig) const;
+	template<size_t n>
+	SchnorrSignature sign(const Digest<n> &md) const;
+	template<size_t n>
+	bool verify(const Digest<n> &md, const SchnorrSignature &sig) const;
 	size_t pubToBin(unsigned char* dst);
 	size_t privToBin(unsigned char* dst);
 	std::string pubToHex();
@@ -141,5 +146,7 @@ public:
 		std::cout << "priv key:" << privToHex() << std::endl;
 	}
 };
+
+#include "schnorr.tcc"
 
 #endif

@@ -108,7 +108,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_testschnorr_OBJECTS = schnorr/dkg.$(OBJEXT) \
-	schnorr/schnorr.$(OBJEXT) schnorr/test.$(OBJEXT)
+	schnorr/schnorr.$(OBJEXT) schnorr/test.$(OBJEXT) \
+	schnorr/digest.$(OBJEXT)
 testschnorr_OBJECTS = $(am_testschnorr_OBJECTS)
 am__DEPENDENCIES_1 =
 testschnorr_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -280,7 +281,7 @@ top_srcdir = @top_srcdir@
 OPTIONS = -std=c++11 -ggdb
 ADDLIBS = -lcrypto
 AM_CPPFLAGS = $(OPTIONS)
-testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp
+testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp schnorr/digest.cpp
 testschnorr_LDADD = $(ADDLIBS)
 all: all-am
 
@@ -369,6 +370,8 @@ schnorr/schnorr.$(OBJEXT): schnorr/$(am__dirstamp) \
 	schnorr/$(DEPDIR)/$(am__dirstamp)
 schnorr/test.$(OBJEXT): schnorr/$(am__dirstamp) \
 	schnorr/$(DEPDIR)/$(am__dirstamp)
+schnorr/digest.$(OBJEXT): schnorr/$(am__dirstamp) \
+	schnorr/$(DEPDIR)/$(am__dirstamp)
 
 testschnorr$(EXEEXT): $(testschnorr_OBJECTS) $(testschnorr_DEPENDENCIES) $(EXTRA_testschnorr_DEPENDENCIES) 
 	@rm -f testschnorr$(EXEEXT)
@@ -381,6 +384,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/digest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/dkg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/schnorr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/test.Po@am__quote@

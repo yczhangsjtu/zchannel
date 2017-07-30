@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "schnorr.h"
+#include "digest.h"
 
 class SharedSignature {
 	SchnorrSignature signature;
@@ -44,7 +45,8 @@ public:
 		return sharedPubkey;
 	}
 
-	SharedSignature sign(const unsigned char *md, size_t len, const SharedKeyPair &aux) const;
+	template<size_t n>
+	SharedSignature sign(const Digest<n> &md, const SharedKeyPair &aux) const;
 };
 
 class PubkeyOrCommitment {

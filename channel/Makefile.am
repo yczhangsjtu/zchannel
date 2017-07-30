@@ -3,5 +3,5 @@ ADDLIBS = -lcrypto
 AM_CPPFLAGS = $(OPTIONS)
 bin_PROGRAMS = testschnorr
 
-testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp
+testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp schnorr/digest.cpp
 testschnorr_LDADD = $(ADDLIBS)
