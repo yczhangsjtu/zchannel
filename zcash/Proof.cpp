@@ -220,7 +220,8 @@ std::once_flag init_public_params_once_flag;
 
 void initialize_curve_params()
 {
-    std::call_once (init_public_params_once_flag, curve_pp::init_public_params);
+  // std::call_once (init_public_params_once_flag, curve_pp::init_public_params);
+	curve_pp::init_public_params();
 }
 
 ProofVerifier ProofVerifier::Strict() {

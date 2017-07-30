@@ -43,6 +43,8 @@ class joinsplit_gadget : gadget<FieldT> {
 		// Output note gadgets
 		boost::array<std::shared_ptr<output_note_gadget<FieldT>>, NumOutputs> zk_output_notes;
 
+		std::string annotation;
+
 	public:
 		// PRF_pk only has a 1-bit domain separation "nonce"
 		// for different macs.
@@ -52,7 +54,7 @@ class joinsplit_gadget : gadget<FieldT> {
 		// for different output `rho`.
 		BOOST_STATIC_ASSERT(NumOutputs <= 2);
 
-		joinsplit_gadget(protoboard<FieldT> &pb) : gadget<FieldT>(pb) {
+		joinsplit_gadget(protoboard<FieldT> &pb, const std::string& annotation) : gadget<FieldT>(pb,annotation), annotation(annotation) {
 			// Verification
 			{
 				// The verification inputs are all bit-strings of various
@@ -60,31 +62,31 @@ class joinsplit_gadget : gadget<FieldT> {
 				// pack them into as few field elements as possible. (The
 				// more verification inputs you have, the more expensive
 				// verification is.)
-				zk_packed_inputs.allocate(pb, verifying_field_element_size());
+				zk_packed_inputs.allocate(pb, verifying_field_element_size(),annotation+" zk_packed_inputs");
 				pb.set_input_sizes(verifying_field_element_size());
 
-				alloc_uint256(zk_unpacked_inputs, zk_h_sig);
+				alloc_uint256(zk_unpacked_inputs, zk_h_sig, annotation+" zk_h_sig");
 
 				for (size_t i = 0; i < NumInputs; i++) {
-					alloc_uint256(zk_unpacked_inputs, zk_merkle_root[i]);
-					alloc_uint256(zk_unpacked_inputs, zk_input_nullifiers[i]);
-					alloc_uint256(zk_unpacked_inputs, zk_input_macs[i]);
+					alloc_uint256(zk_unpacked_inputs, zk_merkle_root[i], annotation+" zk_merkle_root");
+					alloc_uint256(zk_unpacked_inputs, zk_input_nullifiers[i], annotation+" zk_input_nullifiers");
+					alloc_uint256(zk_unpacked_inputs, zk_input_macs[i], annotation+" zk_input_macs");
 
 					// ZChannel part
-					alloc_uint256(zk_unpacked_inputs, zk_pkh[i]);
-					alloc_uint64(zk_unpacked_inputs, bh64[i]);
-					alloc_uint64(zk_unpacked_inputs, ovd64[i]);
+					alloc_uint256(zk_unpacked_inputs, zk_pkh[i], annotation+" zk_pkh");
+					alloc_uint64(zk_unpacked_inputs, bh64[i], annotation+" bh64");
+					alloc_uint64(zk_unpacked_inputs, ovd64[i], annotation+" ovd64");
 				}
 
 				for (size_t i = 0; i < NumOutputs; i++) {
-					alloc_uint256(zk_unpacked_inputs, zk_output_commitments[i]);
+					alloc_uint256(zk_unpacked_inputs, zk_output_commitments[i], annotation+" zk_output_commitments");
 				}
 
-				alloc_uint64(zk_unpacked_inputs, zk_vpub_old);
-				alloc_uint64(zk_unpacked_inputs, zk_vpub_new);
+				alloc_uint64(zk_unpacked_inputs, zk_vpub_old, annotation+" zk_vpub_old");
+				alloc_uint64(zk_unpacked_inputs, zk_vpub_new, annotation+" zk_vpub_new");
 
 				// ZChannel part
-				alloc_uint64(zk_unpacked_inputs, mbh64);
+				alloc_uint64(zk_unpacked_inputs, mbh64, annotation+" mbh64");
 
 				assert(zk_unpacked_inputs.size() == verifying_input_bit_size());
 
@@ -95,7 +97,7 @@ class joinsplit_gadget : gadget<FieldT> {
 							zk_unpacked_inputs,
 							zk_packed_inputs,
 							FieldT::capacity(),
-							"unpacker"
+							annotation+" unpacker"
 							));
 			}
 
@@ -105,18 +107,18 @@ class joinsplit_gadget : gadget<FieldT> {
 			// 
 			// The first variable of our constraint system is constrained
 			// to be one automatically for us, and is known as `ONE`.
-			ZERO.allocate(pb);
+			ZERO.allocate(pb,annotation+" ZERO");
 
-			zk_phi.reset(new digest_variable<FieldT>(pb, 252, ""));
+			zk_phi.reset(new digest_variable<FieldT>(pb, 252, annotation+" zk_phi"));
 
-			zk_total_uint64.allocate(pb, 64);
+			zk_total_uint64.allocate(pb, 64, annotation+" zk_total");
 
 			for (size_t i = 0; i < NumInputs; i++) {
 
 				// For ZChannel
-				tlock64[i].allocate(pb,64);
-				ladd64[i].allocate(pb,64);
-				radd64[i].allocate(pb,64);
+				tlock64[i].allocate(pb,64,annotation+" tlock64");
+				ladd64[i].allocate(pb,64,annotation+" ladd64");
+				radd64[i].allocate(pb,64,annotation+" radd64");
 
 				// Input note gadget for commitments, macs, nullifiers,
 				// and spend authority.
@@ -126,8 +128,8 @@ class joinsplit_gadget : gadget<FieldT> {
 							zk_input_nullifiers[i],
 							zk_pkh[i],
 							tlock64[i],
-							*zk_merkle_root[i]
-							));
+							*zk_merkle_root[i],
+							annotation+" zk_input_note"));
 
 				// The input keys authenticate h_sig to prevent
 				// malleability.
@@ -137,8 +139,8 @@ class joinsplit_gadget : gadget<FieldT> {
 							zk_input_notes[i]->a_sk->bits,
 							zk_h_sig->bits,
 							i ? true : false,
-							zk_input_macs[i]
-							));
+							zk_input_macs[i],
+							annotation+" zk_mac_auth"));
 
 			}
 			// mbh.allocate(pb);
@@ -150,8 +152,8 @@ class joinsplit_gadget : gadget<FieldT> {
 							zk_phi->bits,
 							zk_h_sig->bits,
 							i ? true : false,
-							zk_output_commitments[i]
-							));
+							zk_output_commitments[i],
+							annotation+" zk_output_note"));
 			}
 		}
 
@@ -161,7 +163,7 @@ class joinsplit_gadget : gadget<FieldT> {
 			unpacker->generate_r1cs_constraints(true);
 
 			// Constrain `ZERO`
-			generate_r1cs_equals_const_constraint<FieldT>(this->pb, ZERO, FieldT::zero(), "ZERO");
+			generate_r1cs_equals_const_constraint<FieldT>(this->pb, ZERO, FieldT::zero(), annotation+" ZERO");
 
 			// Constrain bitness of phi
 			zk_phi->generate_r1cs_constraints();
@@ -196,14 +198,14 @@ class joinsplit_gadget : gadget<FieldT> {
 							1,
 							left_side,
 							right_side
-							));
+							),annotation+" Value:left=right");
 
 				// #854: Ensure that left_side is a 64-bit integer.
 				for (size_t i = 0; i < 64; i++) {
 					generate_boolean_r1cs_constraint<FieldT>(
 							this->pb,
 							zk_total_uint64[i],
-							""
+							annotation+" zk_total-64"
 							);
 				}
 
@@ -211,7 +213,7 @@ class joinsplit_gadget : gadget<FieldT> {
 							1,
 							left_side,
 							packed_addition(zk_total_uint64)
-							));
+							),annotation+" Value:left=packed(zk_total)");
 			}
 
 			// Time Lock
@@ -222,60 +224,60 @@ class joinsplit_gadget : gadget<FieldT> {
 				const size_t MSB_POS = 56;
 				const size_t LSB_POS = 7;
 				// MSB is constrained to 0: mbh < 2^63
-				generate_r1cs_equals_const_constraint<FieldT>(this->pb, mbh64[MSB_POS], FieldT::zero(), "ZERO");
+				generate_r1cs_equals_const_constraint<FieldT>(this->pb, mbh64[MSB_POS], FieldT::zero(), annotation+" mbh[MSB]=ZERO");
 				for (size_t i = 0; i < 64; i++) {
 					generate_boolean_r1cs_constraint<FieldT>(
 							this->pb,
 							mbh64[i],
-							""
+							annotation+" mbh=boolean"
 							);
 				}
 				for (size_t i = 0; i < NumInputs; i++) {
 					// OVD is contrained to 0 or 1
-					generate_boolean_r1cs_constraint<FieldT>(this->pb, ovd64[i][LSB_POS], "ZERO");
+					generate_boolean_r1cs_constraint<FieldT>(this->pb, ovd64[i][LSB_POS], annotation+" ovd[LSB]=boolean");
 					for (size_t j = 0; j < 64; j++) {
 						if(j != LSB_POS) {
 							generate_r1cs_equals_const_constraint<FieldT>(
 									this->pb,
 									ovd64[i][j], FieldT::zero(),
-									""
+									annotation+" ovd=0/1"
 									);
 						}
 					}
 					// bh < 2^63
-					generate_r1cs_equals_const_constraint<FieldT>(this->pb, bh64[i][MSB_POS], FieldT::zero(), "ZERO");
+					generate_r1cs_equals_const_constraint<FieldT>(this->pb, bh64[i][MSB_POS], FieldT::zero(), annotation+" bhi[MSB]=ZERO");
 					for (size_t j = 0; j < 64; j++) {
 						generate_boolean_r1cs_constraint<FieldT>(
 								this->pb,
 								bh64[i][j],
-								""
+								annotation+" bh=boolean"
 								);
 					}
 					// tlock < 2^63
-					generate_r1cs_equals_const_constraint<FieldT>(this->pb, tlock64[i][MSB_POS], FieldT::zero(), "ZERO");
+					generate_r1cs_equals_const_constraint<FieldT>(this->pb, tlock64[i][MSB_POS], FieldT::zero(), annotation+" tlock[MSB]=ZERO");
 					for (size_t j = 0; j < 64; j++) {
 						generate_boolean_r1cs_constraint<FieldT>(
 								this->pb,
 								tlock64[i][j],
-								""
+								annotation+" tlock=boolean"
 								);
 					}
 					// ladd < 2^63
-					generate_r1cs_equals_const_constraint<FieldT>(this->pb, ladd64[i][MSB_POS], FieldT::zero(), "ZERO");
+					generate_r1cs_equals_const_constraint<FieldT>(this->pb, ladd64[i][MSB_POS], FieldT::zero(), annotation+" ladd[MSB]=ZERO");
 					for (size_t j = 0; j < 64; j++) {
 						generate_boolean_r1cs_constraint<FieldT>(
 								this->pb,
 								ladd64[i][j],
-								""
+								annotation+" ladd=boolean"
 								);
 					}
 					// ladd < 2^63
-					generate_r1cs_equals_const_constraint<FieldT>(this->pb, radd64[i][MSB_POS], FieldT::zero(), "ZERO");
+					generate_r1cs_equals_const_constraint<FieldT>(this->pb, radd64[i][MSB_POS], FieldT::zero(), annotation+" radd[MSB]=ZERO");
 					for (size_t j = 0; j < 64; j++) {
 						generate_boolean_r1cs_constraint<FieldT>(
 								this->pb,
 								radd64[i][j],
-								""
+								annotation+" radd=boolean"
 								);
 					}
 					linear_combination<FieldT> left_side = packed_addition(bh64[i]);
@@ -289,14 +291,14 @@ class joinsplit_gadget : gadget<FieldT> {
 								1,
 								left_side,
 								right_side
-								));
+								),annotation+" LTIME=RTIME");
 
 					// Ensure that either ovd = 0 or radd = 0
 					this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(
 								packed_addition(ovd64[i]),
 								packed_addition(radd64[i]),
 								0 * ONE
-								));
+								),annotation+" OVD||RADD=0");
 				}
 			}
 		}
@@ -514,17 +516,19 @@ class joinsplit_gadget : gadget<FieldT> {
 
 		void alloc_uint256(
 				pb_variable_array<FieldT>& packed_into,
-				std::shared_ptr<digest_variable<FieldT>>& var
+				std::shared_ptr<digest_variable<FieldT>>& var,
+				const std::string &annotation
 				) {
-			var.reset(new digest_variable<FieldT>(this->pb, 256, ""));
+			var.reset(new digest_variable<FieldT>(this->pb, 256, annotation));
 			packed_into.insert(packed_into.end(), var->bits.begin(), var->bits.end());
 		}
 
 		void alloc_uint64(
 				pb_variable_array<FieldT>& packed_into,
-				pb_variable_array<FieldT>& integer
+				pb_variable_array<FieldT>& integer,
+				const std::string &annotation
 				) {
-			integer.allocate(this->pb, 64, "");
+			integer.allocate(this->pb, 64, annotation);
 			packed_into.insert(packed_into.end(), integer.begin(), integer.end());
 		}
 };

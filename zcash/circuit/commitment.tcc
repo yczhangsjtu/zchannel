@@ -19,8 +19,9 @@ public: note_commitment_gadget(
         pb_variable_array<FieldT>& r, // 256 bit
         pb_variable_array<FieldT>& pkcm, // 256 bit
         pb_variable_array<FieldT>& tlock, // 64 bit
-        std::shared_ptr<digest_variable<FieldT>> result
-    ) : gadget<FieldT>(pb) {
+        std::shared_ptr<digest_variable<FieldT>> result,
+				const std::string& annotation
+    ) : gadget<FieldT>(pb,annotation) {
 					{
 						pb_variable_array<FieldT> leading_byte =
 							from_bits({1, 0, 1, 1, 0, 0, 0, 0}, ZERO);
@@ -31,8 +32,8 @@ public: note_commitment_gadget(
 						pb_variable_array<FieldT> first_of_pkcm(pkcm.begin(), pkcm.begin()+184);
 						pb_variable_array<FieldT> last_of_pkcm(pkcm.begin()+184, pkcm.end());
 
-						cm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, ""));
-						cm_intermediate_hash2.reset(new digest_variable<FieldT>(pb, 256, ""));
+						cm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, annotation+" cm_inter_hash1"));
+						cm_intermediate_hash2.reset(new digest_variable<FieldT>(pb, 256, annotation+" cm_inter_hash2"));
 
 						// final padding
 						pb_variable_array<FieldT> length_padding =
@@ -94,21 +95,21 @@ public: note_commitment_gadget(
 									a_pk,
 									v,
 									first_of_rho
-									}, ""));
+									}, annotation+" note_cm_block1"));
 						assert(leading_byte.size() + a_pk.size() + v.size() + first_of_rho.size() == 512);
 
 						cm_block2.reset(new block_variable<FieldT>(pb, {
 									last_of_rho,
 									r,
 									first_of_pkcm
-									}, ""));
+									}, annotation+" note_cm_block2"));
 						assert(last_of_rho.size()+r.size()+first_of_pkcm.size() == 512);
 
 						cm_block3.reset(new block_variable<FieldT>(pb, {
 									last_of_pkcm,
 									tlock,
 									length_padding	
-									}, ""));
+									}, annotation+" note_cm_block3"));
 
 						assert(last_of_pkcm.size()+tlock.size()+length_padding.size()==512);
 
@@ -119,7 +120,7 @@ public: note_commitment_gadget(
 									IV,
 									cm_block1->bits,
 									*cm_intermediate_hash1,
-									""));
+									annotation+" note_cm_hasher1"));
 
 						pb_linear_combination_array<FieldT> IV2(cm_intermediate_hash1->bits);
 
@@ -128,7 +129,7 @@ public: note_commitment_gadget(
 									IV2,
 									cm_block2->bits,
 									*cm_intermediate_hash2,
-									""));
+									annotation+" note_cm_hasher2"));
 						pb_linear_combination_array<FieldT> IV3(cm_intermediate_hash2->bits);
 
 						cm_hasher3.reset(new sha256_compression_function_gadget<FieldT>(
@@ -136,7 +137,7 @@ public: note_commitment_gadget(
 									IV3,
 									cm_block3->bits,
 									*result,
-									""));
+									annotation+" note_cm_hasher3"));
 					}
     }
 
@@ -174,13 +175,14 @@ public:
         pb_variable_array<FieldT>& r, // 256 bit
         pb_variable_array<FieldT>& pkh, // 256 bit
         pb_variable_array<FieldT>& tlock, // 64 bit
-        std::shared_ptr<digest_variable<FieldT>> result
-				) : gadget<FieldT>(pb) {
+        std::shared_ptr<digest_variable<FieldT>> result,
+				const std::string& annotation
+				) : gadget<FieldT>(pb,annotation) {
 			pb_variable_array<FieldT> leading_byte =
 				from_bits({1, 1, 1, 1}, ZERO);
 
-			pkcm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, ""));
-			pkcm.reset(new digest_variable<FieldT>(pb,256,""));
+			pkcm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, annotation+" inputnote_pkcm_interhash1"));
+			pkcm.reset(new digest_variable<FieldT>(pb,256,annotation+" inputnote_pkcm"));
 
 			// final padding
 			pb_variable_array<FieldT> length_padding =
@@ -258,11 +260,11 @@ public:
 						leading_byte,
 						a_sk,
 						pkh
-						}, ""));
+						}, annotation+" pkcm_block1"));
 
 			pkcm_block2.reset(new block_variable<FieldT>(pb, {
 						length_padding
-						}, ""));
+						}, annotation+" pkcm_block2"));
 
 			pb_linear_combination_array<FieldT> IV = SHA256_default_IV(pb);
 
@@ -271,7 +273,7 @@ public:
 						IV,
 						pkcm_block1->bits,
 						*pkcm_intermediate_hash1,
-						""));
+						annotation+" pkcm_hasher1"));
 
 			pb_linear_combination_array<FieldT> IV2(pkcm_intermediate_hash1->bits);
 
@@ -280,7 +282,7 @@ public:
 						IV2,
 						pkcm_block2->bits,
 						*pkcm,
-						""));
+						annotation+" pkcm_hasher2"));
 
 			note_gadget.reset(new note_commitment_gadget<FieldT>(
 						pb,
@@ -291,8 +293,8 @@ public:
 						r, // 256 bit
 						pkcm->bits, // 256 bit
 						tlock, // 64 bit
-						result
-						));
+						result,
+						annotation+" note_gadget_note_commitment"));
 
 		}
     void generate_r1cs_constraints() {

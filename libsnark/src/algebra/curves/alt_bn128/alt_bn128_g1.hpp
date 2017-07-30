@@ -91,5 +91,64 @@ void batch_to_special_all_non_zeros(std::vector<T> &vec);
 template<>
 void batch_to_special_all_non_zeros<alt_bn128_G1>(std::vector<alt_bn128_G1> &vec);
 
+/*
+std::ostream& operator<<(std::ostream& out, const std::vector<alt_bn128_G1> &v)
+{
+    out << v.size() << "\n";
+    for (const alt_bn128_G1& t : v)
+    {
+        out << t << OUTPUT_NEWLINE;
+    }
+
+    return out;
+}
+
+std::istream& operator>>(std::istream& in, std::vector<alt_bn128_G1> &v)
+{
+    v.clear();
+
+    size_t s;
+    in >> s;
+    consume_newline(in);
+
+    v.reserve(s);
+
+    for (size_t i = 0; i < s; ++i)
+    {
+        alt_bn128_G1 g;
+        in >> g;
+        consume_OUTPUT_NEWLINE(in);
+        v.emplace_back(g);
+    }
+
+    return in;
+}
+
+template<>
+void batch_to_special_all_non_zeros<alt_bn128_G1>(std::vector<alt_bn128_G1> &vec)
+{
+    std::vector<alt_bn128_Fq> Z_vec;
+    Z_vec.reserve(vec.size());
+
+    for (auto &el: vec)
+    {
+        Z_vec.emplace_back(el.Z);
+    }
+    batch_invert<alt_bn128_Fq>(Z_vec);
+
+    const alt_bn128_Fq one = alt_bn128_Fq::one();
+
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
+        alt_bn128_Fq Z2 = Z_vec[i].squared();
+        alt_bn128_Fq Z3 = Z_vec[i] * Z2;
+
+        vec[i].X = vec[i].X * Z2;
+        vec[i].Y = vec[i].Y * Z3;
+        vec[i].Z = one;
+    }
+}
+*/
+
 } // libsnark
 #endif // ALT_BN128_G1_HPP_

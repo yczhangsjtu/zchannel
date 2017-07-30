@@ -146,7 +146,7 @@ bool r1cs_constraint_system<FieldT>::is_satisfied(const r1cs_primary_input<Field
 
         if (!(ares*bres == cres))
         {
-#ifdef DEBUG
+// #ifdef DEBUG
             auto it = constraint_annotations.find(c);
             printf("constraint %zu (%s) unsatisfied\n", c, (it == constraint_annotations.end() ? "no annotation" : it->second.c_str()));
             printf("<a,(1,x)> = "); ares.print();
@@ -154,7 +154,7 @@ bool r1cs_constraint_system<FieldT>::is_satisfied(const r1cs_primary_input<Field
             printf("<c,(1,x)> = "); cres.print();
             printf("constraint was:\n");
             dump_r1cs_constraint(constraints[c], full_variable_assignment, variable_annotations);
-#endif // DEBUG
+// #endif // DEBUG
             return false;
         }
     }
@@ -171,9 +171,9 @@ void r1cs_constraint_system<FieldT>::add_constraint(const r1cs_constraint<FieldT
 template<typename FieldT>
 void r1cs_constraint_system<FieldT>::add_constraint(const r1cs_constraint<FieldT> &c, const std::string &annotation)
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     constraint_annotations[constraints.size()] = annotation;
-#endif
+// #endif
     constraints.emplace_back(c);
 }
 
@@ -281,7 +281,7 @@ std::istream& operator>>(std::istream &in, r1cs_constraint_system<FieldT> &cs)
 template<typename FieldT>
 void r1cs_constraint_system<FieldT>::report_linear_constraint_statistics() const
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     for (size_t i = 0; i < constraints.size(); ++i)
     {
         auto &constr = constraints[i];
@@ -303,7 +303,7 @@ void r1cs_constraint_system<FieldT>::report_linear_constraint_statistics() const
             printf("%s\n", (it == constraint_annotations.end() ? FORMAT("", "constraint_%zu", i) : it->second).c_str());
         }
     }
-#endif
+// #endif
 }
 
 } // libsnark

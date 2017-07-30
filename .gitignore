@@ -42,3 +42,6 @@ tags
 # http://www.gnu.org/software/texinfo
 
 /texinfo.tex
+
+/libsnark/src/algebra/fields/tests/test_bigint
+/channel

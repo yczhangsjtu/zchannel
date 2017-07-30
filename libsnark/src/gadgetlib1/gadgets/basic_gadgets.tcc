@@ -284,15 +284,15 @@ void test_disjunction_gadget(const size_t n)
 
         d.generate_r1cs_witness();
 
-#ifdef DEBUG
+// #ifdef DEBUG
         printf("positive test for %zu\n", w);
-#endif
+// #endif
         assert(pb.val(output) == (w ? FieldT::one() : FieldT::zero()));
         assert(pb.is_satisfied());
 
-#ifdef DEBUG
+// #ifdef DEBUG
         printf("negative test for %zu\n", w);
-#endif
+// #endif
         pb.val(output) = (w ? FieldT::zero() : FieldT::one());
         assert(!pb.is_satisfied());
     }
@@ -375,15 +375,15 @@ void test_conjunction_gadget(const size_t n)
 
         c.generate_r1cs_witness();
 
-#ifdef DEBUG
+// #ifdef DEBUG
         printf("positive test for %zu\n", w);
-#endif
+// #endif
         assert(pb.val(output) == (w == (1ul<<n) - 1 ? FieldT::one() : FieldT::zero()));
         assert(pb.is_satisfied());
 
-#ifdef DEBUG
+// #ifdef DEBUG
         printf("negative test for %zu\n", w);
-#endif
+// #endif
         pb.val(output) = (w == (1ul<<n) - 1 ? FieldT::zero() : FieldT::one());
         assert(!pb.is_satisfied());
     }
@@ -463,9 +463,9 @@ void test_comparison_gadget(const size_t n)
 
             cmp.generate_r1cs_witness();
 
-#ifdef DEBUG
+// #ifdef DEBUG
             printf("positive test for %zu < %zu\n", a, b);
-#endif
+// #endif
             assert(pb.val(less) == (a < b ? FieldT::one() : FieldT::zero()));
             assert(pb.val(less_or_eq) == (a <= b ? FieldT::one() : FieldT::zero()));
             assert(pb.is_satisfied());
@@ -536,15 +536,15 @@ void test_inner_product_gadget(const size_t n)
             }
 
             g.generate_r1cs_witness();
-#ifdef DEBUG
+// #ifdef DEBUG
             printf("positive test for (%zu, %zu)\n", i, j);
-#endif
+// #endif
             assert(pb.val(result) == FieldT(correct));
             assert(pb.is_satisfied());
 
-#ifdef DEBUG
+// #ifdef DEBUG
             printf("negative test for (%zu, %zu)\n", i, j);
-#endif
+// #endif
             pb.val(result) = FieldT(100*n+19);
             assert(!pb.is_satisfied());
         }

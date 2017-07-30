@@ -37,11 +37,11 @@ std::string FORMAT(const std::string &prefix, const char* format, ...);
 template<typename ... Types>
 void UNUSED(Types&&...) {}
 
-#ifdef DEBUG
+// #ifdef DEBUG
 #define FMT FORMAT
-#else
-#define FMT(...) (UNUSED(__VA_ARGS__), "")
-#endif
+// #else
+// #define FMT(...) (UNUSED(__VA_ARGS__), "")
+// #endif
 
 void serialize_bit_vector(std::ostream &out, const bit_vector &v);
 void deserialize_bit_vector(std::istream &in, bit_vector &v);

@@ -6,17 +6,19 @@ private:
     pb_variable_array<FieldT> positions;
     std::shared_ptr<merkle_authentication_path_variable<FieldT, sha256_gadget>> authvars;
     std::shared_ptr<merkle_tree_check_read_gadget<FieldT, sha256_gadget>> auth;
+		std::string annotation;
 
 public:
     merkle_tree_gadget(
         protoboard<FieldT>& pb,
         digest_variable<FieldT> leaf,
         digest_variable<FieldT> root,
-        pb_variable<FieldT>& enforce
-    ) : gadget<FieldT>(pb) {
-        positions.allocate(pb, INCREMENTAL_MERKLE_TREE_DEPTH);
+        pb_variable<FieldT>& enforce,
+				const std::string &annotation
+    ) : gadget<FieldT>(pb,annotation), annotation(annotation) {
+        positions.allocate(pb, INCREMENTAL_MERKLE_TREE_DEPTH, annotation+" merkle_tree_position");
         authvars.reset(new merkle_authentication_path_variable<FieldT, sha256_gadget>(
-            pb, INCREMENTAL_MERKLE_TREE_DEPTH, "auth"
+            pb, INCREMENTAL_MERKLE_TREE_DEPTH, annotation+" auth"
         ));
         auth.reset(new merkle_tree_check_read_gadget<FieldT, sha256_gadget>(
             pb,
@@ -26,7 +28,7 @@ public:
             root,
             *authvars,
             enforce,
-            ""
+            annotation+" merkle_tree_auth"
         ));
     }
 
@@ -39,7 +41,7 @@ public:
             generate_boolean_r1cs_constraint<FieldT>(
                 this->pb,
                 positions[i],
-                "boolean_positions"
+                annotation+" boolean_positions"
             );
         }
 

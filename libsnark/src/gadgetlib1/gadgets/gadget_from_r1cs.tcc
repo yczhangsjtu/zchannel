@@ -30,14 +30,14 @@ gadget_from_r1cs<FieldT>::gadget_from_r1cs(protoboard<FieldT> &pb,
     size_t cs_var_idx = 1;
     for (auto va : vars)
     {
-#ifdef DEBUG
+// #ifdef DEBUG
         printf("gadget_from_r1cs: translating a block of variables with length %zu\n", va.size());
-#endif
+// #endif
         for (auto v : va)
         {
             cs_to_vars[cs_var_idx] = v.index;
 
-#ifdef DEBUG
+// #ifdef DEBUG
             if (v.index != 0)
             {
                 // handle annotations, except for re-annotating constant term
@@ -51,15 +51,15 @@ gadget_from_r1cs<FieldT>::gadget_from_r1cs(protoboard<FieldT> &pb,
 
                 pb.augment_variable_annotation(v, annotation);
             }
-#endif
+// #endif
             ++cs_var_idx;
         }
     }
 
-#ifdef DEBUG
+// #ifdef DEBUG
     printf("gadget_from_r1cs: sum of all block lengths: %zu\n", cs_var_idx-1);
     printf("gadget_from_r1cs: cs.num_variables(): %zu\n", cs.num_variables());
-#endif
+// #endif
 
     assert(cs_var_idx - 1 == cs.num_variables());
 }
@@ -89,13 +89,13 @@ void gadget_from_r1cs<FieldT>::generate_r1cs_constraints()
 
         std::string annotation = FMT(this->annotation_prefix, " constraint_%zu", i);
 
-#ifdef DEBUG
+// #ifdef DEBUG
         auto it = cs.constraint_annotations.find(i);
         if (it != cs.constraint_annotations.end())
         {
             annotation = this->annotation_prefix + " " + it->second;
         }
-#endif
+// #endif
         this->pb.add_r1cs_constraint(translated_constr, annotation);
     }
 }

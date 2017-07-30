@@ -125,7 +125,7 @@ namespace libzcash {
 				r1cs_constraint_system<FieldT> generate_r1cs() {
 					protoboard<FieldT> pb;
 
-					joinsplit_gadget<FieldT, NumInputs, NumOutputs> g(pb);
+					joinsplit_gadget<FieldT, NumInputs, NumOutputs> g(pb,"js_gadget");
 					g.generate_r1cs_constraints();
 
 					return pb.get_constraint_system();
@@ -354,7 +354,7 @@ namespace libzcash {
 
 					protoboard<FieldT> pb;
 					{
-						joinsplit_gadget<FieldT, NumInputs, NumOutputs> g(pb);
+						joinsplit_gadget<FieldT, NumInputs, NumOutputs> g(pb,"js_gadget");
 						g.generate_r1cs_constraints();
 						g.generate_r1cs_witness(
 								phi,

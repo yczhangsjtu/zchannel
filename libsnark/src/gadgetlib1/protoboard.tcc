@@ -19,9 +19,9 @@ protoboard<FieldT>::protoboard()
 {
     constant_term = FieldT::one();
 
-#ifdef DEBUG
+// #ifdef DEBUG
     constraint_system.variable_annotations[0] = "ONE";
-#endif
+// #endif
 
     next_free_var = 1; /* to account for constant 1 term */
     next_free_lc = 0;
@@ -36,12 +36,12 @@ void protoboard<FieldT>::clear_values()
 template<typename FieldT>
 var_index_t protoboard<FieldT>::allocate_var_index(const std::string &annotation)
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     assert(annotation != "");
     constraint_system.variable_annotations[next_free_var] = annotation;
-#else
-    UNUSED(annotation);
-#endif
+// #else
+//     UNUSED(annotation);
+// #endif
     ++constraint_system.auxiliary_input_size;
     values.emplace_back(FieldT::zero());
     return next_free_var++;
@@ -99,22 +99,22 @@ FieldT protoboard<FieldT>::lc_val(const pb_linear_combination<FieldT> &lc) const
 template<typename FieldT>
 void protoboard<FieldT>::add_r1cs_constraint(const r1cs_constraint<FieldT> &constr, const std::string &annotation)
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     assert(annotation != "");
     constraint_system.constraint_annotations[constraint_system.constraints.size()] = annotation;
-#else
-    UNUSED(annotation);
-#endif
+// #else
+//     UNUSED(annotation);
+// #endif
     constraint_system.constraints.emplace_back(constr);
 }
 
 template<typename FieldT>
 void protoboard<FieldT>::augment_variable_annotation(const pb_variable<FieldT> &v, const std::string &postfix)
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     auto it = constraint_system.variable_annotations.find(v.index);
     constraint_system.variable_annotations[v.index] = (it == constraint_system.variable_annotations.end() ? "" : it->second + " ") + postfix;
-#endif
+// #endif
 }
 
 template<typename FieldT>
@@ -126,13 +126,13 @@ bool protoboard<FieldT>::is_satisfied() const
 template<typename FieldT>
 void protoboard<FieldT>::dump_variables() const
 {
-#ifdef DEBUG
+// #ifdef DEBUG
     for (size_t i = 0; i < constraint_system.num_variables; ++i)
     {
         printf("%-40s --> ", constraint_system.variable_annotations[i].c_str());
         values[i].as_bigint().print_hex();
     }
-#endif
+// #endif
 }
 
 template<typename FieldT>

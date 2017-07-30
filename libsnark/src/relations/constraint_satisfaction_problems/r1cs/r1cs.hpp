@@ -123,10 +123,10 @@ public:
     size_t num_variables() const;
     size_t num_constraints() const;
 
-#ifdef DEBUG
+// #ifdef DEBUG
     std::map<size_t, std::string> constraint_annotations;
     std::map<size_t, std::string> variable_annotations;
-#endif
+// #endif
 
     bool is_valid() const;
     bool is_satisfied(const r1cs_primary_input<FieldT> &primary_input,
