@@ -2,6 +2,7 @@ template<typename DigestType>
 SchnorrSignature SchnorrKeyPair::signWithAux(const DigestType &md, const SchnorrKeyPair& aux) const {
 	std::call_once(initflag,SchnorrSignature::initSchnorr);
 
+	assert(a);
 	assert(aux.a);
 	assert(aux.p);
 
@@ -42,7 +43,7 @@ SchnorrSignature SchnorrKeyPair::signWithAux(const DigestType &md, const Schnorr
 	EC_POINT_get_affine_coordinates_GFp(group,aux.p,x0,y0,ctx);
 	x0len = BN_num_bytes(x0);
 	BN_bn2bin(x0,x0bin);
-	digest = DigestType(x0bin,x0len,md.data(),order);
+	digest = DigestType(x0bin,x0len,md.data(),md.size());
 	BN_bin2bn(digest.data(),digest.size(),e);
 	BN_mod_mul(s,a,e,order,ctx);
 	BN_mod_sub(s,aux.a,s,order,ctx);

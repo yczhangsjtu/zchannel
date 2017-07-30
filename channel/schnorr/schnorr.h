@@ -104,12 +104,18 @@ public:
 		}
 		else p = NULL;
 	}
+	void setPub(const SchnorrKeyPair& keypair) {
+		setPub(keypair.p);
+	}
 	void setPriv(const BIGNUM *priv) {
 		if(a) BN_free(a);
 		if(priv) {
 			a = BN_new();
 			BN_copy(a,priv);
 		} else a = NULL;
+	}
+	void setPriv(const SchnorrKeyPair& keypair) {
+		setPriv(keypair.a);
 	}
 
 	bool check() {
@@ -144,9 +150,9 @@ public:
 	size_t privToBin(unsigned char* dst);
 	std::string pubToHex();
 	std::string privToHex();
-	inline void print() {
-		std::cout << "pub  key:" << pubToHex() << std::endl;
-		std::cout << "priv key:" << privToHex() << std::endl;
+	inline void print(int offset=0) {
+		std::cout << std::string(" ",offset) << "pub  key:" << pubToHex() << std::endl;
+		std::cout << std::string(" ",offset) << "priv key:" << privToHex() << std::endl;
 	}
 };
 

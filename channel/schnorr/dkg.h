@@ -2,7 +2,9 @@
 #define __DKG_H_
 
 #include <array>
+#include <iostream>
 #include <cassert>
+#include <string>
 
 #include "schnorr.h"
 #include "digest.h"
@@ -17,6 +19,9 @@ public:
 	inline SchnorrSignature getSignature(){return signature;}
 	inline SchnorrSignature operator+(const SharedSignature& rh) const {
 		return signature+rh.signature;
+	}
+	inline std::string toHex() {
+		return signature.toHex();
 	}
 };
 
@@ -37,16 +42,36 @@ public:
 		sharedPubkey = keypair + remote;
 	}
 
-	inline SchnorrKeyPair getKeypair() {
+	inline SchnorrKeyPair getKeypair() const {
 		return keypair;
 	}
 
-	inline SchnorrKeyPair getSharedPubkey() {
+	inline SchnorrKeyPair getSharedPubkey() const {
 		return sharedPubkey;
 	}
 
-	template<size_t n>
-	SharedSignature sign(const Digest<n> &md, const SharedKeyPair &aux) const;
+	inline SchnorrKeyPair getAuxKeypair() const {
+		SchnorrKeyPair auxKeypair(keypair);
+		auxKeypair.setPub(sharedPubkey);
+		return auxKeypair;
+	}
+
+	template<typename DigestType>
+	inline SharedSignature sign(const DigestType &md, const SharedKeyPair &aux) const {
+		return keypair.signWithAux(md,aux.getAuxKeypair());
+	}
+
+	template<typename DigestType>
+	inline bool verify(const DigestType &md, const SchnorrSignature& sig) const {
+		return sharedPubkey.verify(md,sig);
+	}
+
+	inline void print(int offset=0) {
+		std::cout << std::string(" ",offset) << "private key: " << std::endl;
+		keypair.print(offset+2);
+		std::cout << std::string(" ",offset) << "shared pub key: " << std::endl;
+		sharedPubkey.print(offset+2);
+	}
 };
 
 class PubkeyOrCommitment {

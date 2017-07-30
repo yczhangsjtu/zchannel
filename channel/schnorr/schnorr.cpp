@@ -36,10 +36,11 @@ SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
 SchnorrSignature SchnorrSignature::operator+(const SchnorrSignature& rh) const {
 	assert(e); assert(rh.e);
 	assert(s); assert(rh.s);
+	assert(BN_cmp(e,rh.e)==0);
 	SchnorrSignature res;
 	res.e = BN_new();
 	res.s = BN_new();
-	BN_add(res.e,e,rh.e);
+	BN_copy(res.e,e);
 	BN_add(res.s,s,rh.s);
 	return res;
 }
@@ -162,6 +163,7 @@ Commitment SchnorrKeyPair::commit() {
 }
 
 size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
+	if(!p) return publen = 0;
 	unsigned char *ppubbuf = pubbuf.data();
 	publen = EC_POINT_point2oct(SchnorrSignature::group,p,
 			POINT_CONVERSION_UNCOMPRESSED,ppubbuf,65,SchnorrSignature::ctx);
@@ -173,6 +175,7 @@ size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
 }
 
 size_t SchnorrKeyPair::privToBin(unsigned char *dst) {
+	if(!a) return privlen = 0;
 	unsigned char *pprivbuf = privbuf.data();
 	privlen = BN_num_bytes(a);
 	BN_bn2bin(a,pprivbuf);
@@ -184,6 +187,7 @@ size_t SchnorrKeyPair::privToBin(unsigned char *dst) {
 }
 
 std::string SchnorrKeyPair::pubToHex() {
+	if(!p) return "";
 	if(!publen) {
 		pubToBin(NULL);
 	}
@@ -195,6 +199,7 @@ std::string SchnorrKeyPair::pubToHex() {
 }
 
 std::string SchnorrKeyPair::privToHex() {
+	if(!a) return "";
 	if(!privlen) {
 		privToBin(NULL);
 	}
