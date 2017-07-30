@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-pc-linux-gnu
 host_triplet = x86_64-pc-linux-gnu
-bin_PROGRAMS = schnorr$(EXEEXT)
+bin_PROGRAMS = dkg$(EXEEXT)
 subdir = channel
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -106,10 +106,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_schnorr_OBJECTS = schnorr.$(OBJEXT)
-schnorr_OBJECTS = $(am_schnorr_OBJECTS)
+am__dirstamp = $(am__leading_dot)dirstamp
+am_dkg_OBJECTS = schnorr/dkg.$(OBJEXT) schnorr/schnorr.$(OBJEXT)
+dkg_OBJECTS = $(am_dkg_OBJECTS)
 am__DEPENDENCIES_1 =
-schnorr_DEPENDENCIES = $(am__DEPENDENCIES_1)
+dkg_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -139,8 +140,8 @@ AM_V_CXXLD = $(am__v_CXXLD_$(V))
 am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(schnorr_SOURCES)
-DIST_SOURCES = $(schnorr_SOURCES)
+SOURCES = $(dkg_SOURCES)
+DIST_SOURCES = $(dkg_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -278,8 +279,8 @@ top_srcdir = ..
 OPTIONS = -std=c++11 -ggdb
 ADDLIBS = -lcrypto
 AM_CPPFLAGS = $(OPTIONS)
-schnorr_SOURCES = schnorr.cpp
-schnorr_LDADD = $(ADDLIBS)
+dkg_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp
+dkg_LDADD = $(ADDLIBS)
 all: all-am
 
 .SUFFIXES:
@@ -355,18 +356,30 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+schnorr/$(am__dirstamp):
+	@$(MKDIR_P) schnorr
+	@: > schnorr/$(am__dirstamp)
+schnorr/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) schnorr/$(DEPDIR)
+	@: > schnorr/$(DEPDIR)/$(am__dirstamp)
+schnorr/dkg.$(OBJEXT): schnorr/$(am__dirstamp) \
+	schnorr/$(DEPDIR)/$(am__dirstamp)
+schnorr/schnorr.$(OBJEXT): schnorr/$(am__dirstamp) \
+	schnorr/$(DEPDIR)/$(am__dirstamp)
 
-schnorr$(EXEEXT): $(schnorr_OBJECTS) $(schnorr_DEPENDENCIES) $(EXTRA_schnorr_DEPENDENCIES) 
-	@rm -f schnorr$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(schnorr_OBJECTS) $(schnorr_LDADD) $(LIBS)
+dkg$(EXEEXT): $(dkg_OBJECTS) $(dkg_DEPENDENCIES) $(EXTRA_dkg_DEPENDENCIES) 
+	@rm -f dkg$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(dkg_OBJECTS) $(dkg_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f schnorr/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/schnorr.Po
+include schnorr/$(DEPDIR)/dkg.Po
+include schnorr/$(DEPDIR)/schnorr.Po
 
 .cpp.o:
 	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -499,6 +512,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f schnorr/$(DEPDIR)/$(am__dirstamp)
+	-rm -f schnorr/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -508,7 +523,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf schnorr/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -554,7 +569,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf schnorr/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

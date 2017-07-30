@@ -1,7 +1,7 @@
 OPTIONS = -std=c++11 -ggdb
 ADDLIBS = -lcrypto
 AM_CPPFLAGS = $(OPTIONS)
-bin_PROGRAMS = schnorr
+bin_PROGRAMS = dkg
 
-schnorr_SOURCES = schnorr.cpp
-schnorr_LDADD = $(ADDLIBS)
+dkg_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp
+dkg_LDADD = $(ADDLIBS)
