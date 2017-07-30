@@ -65,15 +65,10 @@ public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
 	SchnorrKeyPair(BIGNUM *_a,EC_POINT *_p){
 		std::call_once(SchnorrSignature::initflag,SchnorrSignature::initSchnorr);
-		if(_p) {
-			p = EC_POINT_new(SchnorrSignature::group);
-			EC_POINT_copy(p,_p);
-		}
-		else p = NULL;
-		if(_a) {
-			a = BN_new();
-			BN_copy(a,_a);
-		} else a = NULL;
+		a = NULL;
+		p = NULL;
+		setPub(_p);
+		setPriv(_a);
 	}
 	SchnorrKeyPair(const SchnorrKeyPair& keypair):SchnorrKeyPair(keypair.a,keypair.p) {
 	}
@@ -82,12 +77,47 @@ public:
 		if(a) BN_free(a);
 	}
 	SchnorrKeyPair& operator=(const SchnorrKeyPair& keypair);
-	inline EC_POINT *getPub() {
+	SchnorrKeyPair operator+(const SchnorrKeyPair& rh) const;
+	SchnorrKeyPair& operator+=(const SchnorrKeyPair& rh);
+	EC_POINT *getPub() {
+		if(a && !p) {
+			p = EC_POINT_new(SchnorrSignature::group);
+			EC_POINT_mul(SchnorrSignature::group,p,a,NULL,NULL,SchnorrSignature::ctx);
+		}
 		return p;
 	}
 	inline BIGNUM *getPriv() {
 		return a;
 	}
+	void setPub(const EC_POINT* pub) {
+		if(p) EC_POINT_free(p);
+		if(pub) {
+			p = EC_POINT_new(SchnorrSignature::group);
+			EC_POINT_copy(p,pub);
+		}
+		else p = NULL;
+	}
+	void setPriv(const BIGNUM *priv) {
+		if(a) BN_free(a);
+		if(priv) {
+			a = BN_new();
+			BN_copy(a,priv);
+		} else a = NULL;
+	}
+
+	bool check() {
+		bool ret;
+		if(a && p) {
+			EC_POINT *tmp = EC_POINT_new(SchnorrSignature::group);
+			EC_POINT_mul(SchnorrSignature::group,tmp,a,NULL,NULL,SchnorrSignature::ctx);
+			ret = EC_POINT_cmp(SchnorrSignature::group,tmp,p,SchnorrSignature::ctx) == 0;
+			EC_POINT_free(tmp);
+		} else {
+			ret = true;
+		}
+		return ret;
+	}
+
 	Commitment commit();
 	
 	inline SchnorrKeyPair pubkey() {

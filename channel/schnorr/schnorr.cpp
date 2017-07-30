@@ -1,6 +1,7 @@
 #include <mutex>
 #include <string>
 #include <iostream>
+#include <cassert>
 
 #include <string.h>
 #include <openssl/ec.h>
@@ -243,6 +244,36 @@ SchnorrKeyPair& SchnorrKeyPair::operator=(const SchnorrKeyPair& keypair) {
 		}
 		privbuf = keypair.privbuf;
 	}
+}
+
+SchnorrKeyPair SchnorrKeyPair::operator+(const SchnorrKeyPair& rh) const {
+	SchnorrKeyPair sum(*this);
+	if(sum.a && rh.a) {
+		BIGNUM *suma = BN_new();
+		BN_add(suma,sum.a,rh.a);
+		sum.setPriv(suma);
+	} else {
+		sum.setPriv(NULL);
+	}
+	if(sum.p && rh.p) {
+		EC_POINT *sump = EC_POINT_new(SchnorrSignature::group);
+		EC_POINT_add(SchnorrSignature::group,sump,sum.p,rh.p,SchnorrSignature::ctx);
+		sum.setPub(sump);
+	} else if(sum.getPub()) {
+		sum.getPub();
+	} else {
+		sum.setPub(NULL);
+	}
+	if(sum.p) {
+		assert(sum.check());
+	}
+	return sum;
+}
+
+SchnorrKeyPair& SchnorrKeyPair::operator+=(const SchnorrKeyPair& rh) {
+	SchnorrKeyPair sum = (*this)+rh;
+	*this = sum;
+	return *this;
 }
 
 Commitment SchnorrKeyPair::commit() {

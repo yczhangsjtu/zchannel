@@ -3,7 +3,3 @@
 
 PubkeyOrCommitment SchnorrDKG::KeyGen(int sendWhat) {
 }
-
-int main() {
-	return 0;
-}

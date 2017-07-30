@@ -8,6 +8,38 @@
 
 class SharedKeyPair {
 	SchnorrKeyPair keypair;
+	SchnorrKeyPair sharedPubkey;
+public:
+	SharedKeyPair(){}
+	SharedKeyPair(const SchnorrKeyPair &keypair):keypair(keypair){}
+	SharedKeyPair(const SchnorrKeyPair &keypair, const SchnorrKeyPair &sharedPubkey):keypair(keypair),sharedPubkey(sharedPubkey){}
+	SharedKeyPair(const SharedKeyPair &skeypair):SharedKeyPair(skeypair.keypair,skeypair.sharedPubkey){}
+
+	inline void setShared(const SchnorrKeyPair &shared) {
+		sharedPubkey = shared;
+	}
+
+	inline void setRemote(const SchnorrKeyPair &remote) {
+		sharedPubkey = keypair + remote;
+	}
+
+	inline SchnorrKeyPair getKeypair() {
+		return keypair;
+	}
+
+	inline SchnorrKeyPair getSharedPubkey() {
+		return sharedPubkey;
+	}
+};
+
+class SharedSignature {
+	SchnorrSignature signature;
+public:
+	SharedSignature(){}
+	SharedSignature(const SchnorrSignature& sig):signature(sig){}
+	SharedSignature(const SharedSignature& sig):signature(sig.signature){}
+	inline void setSignature(const SchnorrSignature& sig){signature=sig;}
+	inline SchnorrSignature getSignature(){return signature;}
 };
 
 class PubkeyOrCommitment {
