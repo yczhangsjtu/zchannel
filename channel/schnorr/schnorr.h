@@ -7,6 +7,7 @@
 #include <openssl/sha.h>
 #include <string>
 #include <iostream>
+#include <cassert>
 
 #include "digest.h"
 
@@ -85,14 +86,14 @@ public:
 	SchnorrKeyPair& operator=(const SchnorrKeyPair& keypair);
 	SchnorrKeyPair operator+(const SchnorrKeyPair& rh) const;
 	SchnorrKeyPair& operator+=(const SchnorrKeyPair& rh);
-	EC_POINT *getPub() {
+	const EC_POINT *getPub() {
 		if(a && !p) {
 			p = EC_POINT_new(SchnorrSignature::group);
 			EC_POINT_mul(SchnorrSignature::group,p,a,NULL,NULL,SchnorrSignature::ctx);
 		}
 		return p;
 	}
-	inline BIGNUM *getPriv() {
+	inline const BIGNUM *getPriv() const {
 		return a;
 	}
 	void setPub(const EC_POINT* pub) {
@@ -135,6 +136,8 @@ public:
 	static SchnorrKeyPair keygen();
 	template<typename DigestType>
 	SchnorrSignature sign(const DigestType &md) const;
+	template<typename DigestType>
+	SchnorrSignature signWithAux(const DigestType &md, const SchnorrKeyPair& aux) const;
 	template<typename DigestType>
 	bool verify(const DigestType &md, const SchnorrSignature &sig) const;
 	size_t pubToBin(unsigned char* dst);
