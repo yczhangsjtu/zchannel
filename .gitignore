@@ -5,7 +5,7 @@
 .deps
 
 /Makefile
-Makefile.in
+/Makefile.in
 /ar-lib
 /mdate-sh
 /py-compile
