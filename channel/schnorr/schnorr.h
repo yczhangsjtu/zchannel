@@ -133,10 +133,10 @@ public:
 		return SchnorrKeyPair(a,NULL);
 	}
 	static SchnorrKeyPair keygen();
-	template<size_t n>
-	SchnorrSignature sign(const Digest<n> &md) const;
-	template<size_t n>
-	bool verify(const Digest<n> &md, const SchnorrSignature &sig) const;
+	template<typename DigestType>
+	SchnorrSignature sign(const DigestType &md) const;
+	template<typename DigestType>
+	bool verify(const DigestType &md, const SchnorrSignature &sig) const;
 	size_t pubToBin(unsigned char* dst);
 	size_t privToBin(unsigned char* dst);
 	std::string pubToHex();
