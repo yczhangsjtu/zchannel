@@ -58,6 +58,9 @@ class ZChannel {
 	using DigestType = SHA256Digest;
 	uint256 seed, ask, apk;
 
+	enum class State { READY, WAIT_FOR_CONFIRM_SHARE,
+		ESTABLISHED, WAIT_FOR_CONFIRM_CLOSE, WAIT_FOR_CONFIRM_REDEEM};
+
 	SchnorrDKG<DigestType> shareKey, closeKey;
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
 
@@ -67,15 +70,9 @@ class ZChannel {
 
 	int myindex;
 	int otherindex;
-	int state;
+	State state;
 
 	std::vector<ValuePair> v;
-
-	static const int READY = 0;
-	static const int WAIT_FOR_CONFIRM_SHARE = 1;
-	static const int ESTABLISHED = 2;
-	static const int WAIT_FOR_CONFIRM_CLOSE = 3;
-	static const int WAIT_FOR_CONFIRM_REDEEM = 4;
 public:
 	ZChannel(int index):myindex(index),otherindex(1-index) {
 		assert(index==1 || index==0);
