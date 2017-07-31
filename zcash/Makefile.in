@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = generate$(EXEEXT) createjs$(EXEEXT)
+bin_PROGRAMS = generate$(EXEEXT) createjs$(EXEEXT) \
+	testcircuit$(EXEEXT)
 subdir = zcash
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -145,6 +146,11 @@ am_generate_OBJECTS = GenerateParams.$(OBJEXT) Address.$(OBJEXT) \
 	support/pagelocker.$(OBJEXT) support/cleanse.$(OBJEXT)
 generate_OBJECTS = $(am_generate_OBJECTS)
 generate_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_testcircuit_OBJECTS = TestCircuit.$(OBJEXT) util.$(OBJEXT) \
+	uint256.$(OBJEXT) crypto/sha256.$(OBJEXT) \
+	utilstrencodings.$(OBJEXT)
+testcircuit_OBJECTS = $(am_testcircuit_OBJECTS)
+testcircuit_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -174,8 +180,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(createjs_SOURCES) $(generate_SOURCES)
-DIST_SOURCES = $(createjs_SOURCES) $(generate_SOURCES)
+SOURCES = $(createjs_SOURCES) $(generate_SOURCES) \
+	$(testcircuit_SOURCES)
+DIST_SOURCES = $(createjs_SOURCES) $(generate_SOURCES) \
+	$(testcircuit_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -338,8 +346,12 @@ createjs_SOURCES = CreateJoinSplit.cpp Address.cpp amount.cpp hash.cpp \
 	script/sigcache.cpp script/sign.cpp script/standard.cpp \
 	script/zcashconsensus.cpp
 
+testcircuit_SOURCES = TestCircuit.cpp util.cpp uint256.cpp crypto/sha256.cpp \
+											utilstrencodings.cpp
+
 generate_LDADD = $(LIBPATH) $(ADDLIBS)
 createjs_LDADD = $(LIBPATH) $(ADDLIBS)
+testcircuit_LDADD = $(LIBPATH) $(ADDLIBS)
 all: all-am
 
 .SUFFIXES:
@@ -498,6 +510,10 @@ generate$(EXEEXT): $(generate_OBJECTS) $(generate_DEPENDENCIES) $(EXTRA_generate
 	@rm -f generate$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(generate_OBJECTS) $(generate_LDADD) $(LIBS)
 
+testcircuit$(EXEEXT): $(testcircuit_OBJECTS) $(testcircuit_DEPENDENCIES) $(EXTRA_testcircuit_DEPENDENCIES) 
+	@rm -f testcircuit$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(testcircuit_OBJECTS) $(testcircuit_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f compat/*.$(OBJEXT)
@@ -517,6 +533,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Note.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NoteEncryption.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Proof.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TestCircuit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amount.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arith_uint256.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@

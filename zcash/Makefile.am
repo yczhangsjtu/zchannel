@@ -5,7 +5,7 @@ LIBPATH = -L$(top_srcdir)/libsnark -L$(top_srcdir)/libsnark/depinst/lib -L$(top_
 
 AM_CPPFLAGS = $(INCLUDE) $(OPTIONS) $(ENDIANS)
 
-bin_PROGRAMS = generate createjs
+bin_PROGRAMS = generate createjs testcircuit
 generate_SOURCES = GenerateParams.cpp Address.cpp amount.cpp hash.cpp \
 	IncrementalMerkleTree.cpp JoinSplit.cpp Note.cpp NoteEncryption.cpp prf.cpp \
 	Proof.cpp pubkey.cpp random.cpp sync.cpp util.cpp utilstrencodings.cpp \
@@ -27,8 +27,12 @@ createjs_SOURCES = CreateJoinSplit.cpp Address.cpp amount.cpp hash.cpp \
 	script/interpreter.cpp script/script.cpp script/script_error.cpp \
 	script/sigcache.cpp script/sign.cpp script/standard.cpp \
 	script/zcashconsensus.cpp
+testcircuit_SOURCES = TestCircuit.cpp util.cpp uint256.cpp crypto/sha256.cpp \
+											utilstrencodings.cpp
+
 generate_LDADD = $(LIBPATH) $(ADDLIBS)
 createjs_LDADD = $(LIBPATH) $(ADDLIBS)
+testcircuit_LDADD = $(LIBPATH) $(ADDLIBS)
 
 # include_HEADERS = Address.hpp amount.h compat.h hash.h \
 # 	IncrementalMerkleTree.hpp JoinSplit.hpp NoteEncryption.hpp Note.hpp prf.h \
