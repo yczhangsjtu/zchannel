@@ -33,6 +33,7 @@ class SchnorrSignature {
 
 	void set(BIGNUM **dst, BIGNUM *bn);
 	static void initSchnorr();
+	size_t toBin(unsigned char *dst);
 
 public:
 
@@ -51,7 +52,6 @@ public:
 		if(s) BN_free(s);
 	}
 
-	size_t toBin(unsigned char *dst);
 	std::string toHex();
 };
 
@@ -68,6 +68,8 @@ class SchnorrKeyPair {
 	static EC_GROUP *group;
 	static BIGNUM *order;
 	static BN_CTX *ctx;
+	size_t pubToBin(unsigned char* dst);
+	size_t privToBin(unsigned char* dst);
 public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
 	SchnorrKeyPair(BIGNUM *_a,EC_POINT *_p){
@@ -146,8 +148,6 @@ public:
 	SchnorrSignature signWithAux(const DigestType &md, const SchnorrKeyPair& aux) const;
 	template<typename DigestType>
 	bool verify(const DigestType &md, const SchnorrSignature &sig) const;
-	size_t pubToBin(unsigned char* dst);
-	size_t privToBin(unsigned char* dst);
 	std::string pubToHex();
 	std::string privToHex();
 	inline void print(int offset=0) {
