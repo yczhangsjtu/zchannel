@@ -13,6 +13,7 @@ public:
 	Digest(std::array<unsigned char,n> md):md(md){}
 	size_t size()const{return n;}
 	const unsigned char* data()const{return md.data();}
+	const std::array<unsigned char,n> getArray() const {return md;}
 };
 
 class SHA256Digest: public Digest<32> {

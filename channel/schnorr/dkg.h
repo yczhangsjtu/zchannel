@@ -82,9 +82,14 @@ public:
 	PubkeyOrCommitment() = delete;
 	PubkeyOrCommitment(SchnorrKeyPair keypair):keypair(keypair),iscommit(false){}
 	PubkeyOrCommitment(Commitment commit):commit(commit),iscommit(true){}
-	inline bool isCommit() {return iscommit;}
-	inline bool isPubkey() {return !iscommit;}
+	PubkeyOrCommitment(const PubkeyOrCommitment& rh):keypair(rh.keypair),commit(rh.commit),iscommit(rh.iscommit){}
+	inline bool isCommit() const {return iscommit;}
+	inline bool isPubkey() const {return !iscommit;}
 	inline SchnorrKeyPair & asPubkey() {
+		assert(!iscommit);
+		return keypair;
+	}
+	inline const SchnorrKeyPair & asConstPubkey() const {
 		assert(!iscommit);
 		return keypair;
 	}
@@ -92,22 +97,31 @@ public:
 		assert(iscommit);
 		return commit;
 	}
+	inline const Commitment & asConstCommit() const {
+		assert(iscommit);
+		return commit;
+	}
 };
 
 /**
- * START: KeyGen(SEND_COMMIT) --> WAIT_PUBKEY
- * START: KeyGen(SEND_PUBKEY) --> WAIT_PUBKEY_COMMIT
- * WAIT_PUBKEY_COMMIT: Receive(pubkeyCommit) --> READY
+ * START: keyGen(SEND_COMMIT) --> WAIT_PUBKEY
+ * START: keyGen(SEND_PUBKEY) --> WAIT_PUBKEY_COMMIT
+ * WAIT_PUBKEY_COMMIT: Receive(pubkeyCommit) --> WAIT_PUBKEY
  * WAIT_PUBKEY: Receive(pubkey) --> READY
  * READY: Sign(digest,FOR_?,SEND_COMMIT) --> WAIT_AUX
  * READY: Sign(digest,FOR_?,SEND_PUBKEY) --> WAIT_AUX_COMMIT
  * WAIT_AUX: ReceiveAux(auxPubkey) --> forme? WAIT_SIG_SHARE: READY
- * WAIT_AUX_COMMIT: ReceiveAux(auxPubkey) --> forme? WAIT_SIG_SHARE: READY
+ * WAIT_AUX_COMMIT: ReceiveAux(auxPubkeyCommit) --> WAIT_AUX
+ * WAIT_SIG_SHARE: ReceiveSig(sharedSig) --> READY
  *
  */
+template<typename DigestType>
 class SchnorrDKG {
-	std::array<unsigned char,32> digest;
+	DigestType digest;
 	SharedKeyPair keypair;
+	SharedKeyPair auxKeypair;
+	SharedSignature signature;
+	Commitment pubkeyCommit;
 	static const int START = 0;
 	static const int WAIT_PUBKEY = 1;
 	static const int WAIT_PUBKEY_COMMIT = 2;
@@ -115,16 +129,31 @@ class SchnorrDKG {
 	static const int WAIT_AUX = 4;
 	static const int WAIT_AUX_COMMIT = 5;
 	static const int WAIT_SIG_SHARE = 6;
-	static const int SEND_COMMIT = 0;
-	static const int SEND_PUBKEY = 1;
-	static const int FOR_ME = 1;
-	static const int FOR_OTHER = 2;
 	bool forme;
 	bool forother;
 	int state;
 public:
+	static const int SEND_COMMIT = 0;
+	static const int SEND_PUBKEY = 1;
+	static const int FOR_ME = 1;
+	static const int FOR_OTHER = 2;
 	SchnorrDKG():state(START){}
-	PubkeyOrCommitment KeyGen(int sendWhat);
+	PubkeyOrCommitment keyGen(int sendWhat);
+	inline SchnorrKeyPair pubkey() const {return keypair.getKeypair().pubkey();}
+	inline SchnorrKeyPair sharePubkey() const {return keypair.getSharedPubkey().pubkey();}
+	inline SchnorrKeyPair auxkey() const {return auxKeypair.getKeypair().pubkey();}
+	inline PubkeyOrCommitment keyGenCommit(){return keyGen(SEND_COMMIT);}
+	inline PubkeyOrCommitment keyGenPubkey(){return keyGen(SEND_PUBKEY);}
+	void receive(const PubkeyOrCommitment &pubkeycommit);
+	PubkeyOrCommitment sign(const DigestType &md, int sendWhat, int forWho);
+	inline PubkeyOrCommitment signCommitForMe(const DigestType &md){return sign(md,SEND_COMMIT,FOR_ME);}
+	inline PubkeyOrCommitment signCommitForOther(const DigestType &md){return sign(md,SEND_COMMIT,FOR_OTHER);}
+	inline PubkeyOrCommitment signPubkeyForMe(const DigestType &md){return sign(md,SEND_PUBKEY,FOR_ME);}
+	inline PubkeyOrCommitment signPubkeyForOther(const DigestType &md){return sign(md,SEND_PUBKEY,FOR_OTHER);}
+	SharedSignature receiveAux(const PubkeyOrCommitment &pubkeycommit);
+	SchnorrSignature receiveSig(const SharedSignature &sig);
 };
+
+#include "dkg.tcc"
 
 #endif
