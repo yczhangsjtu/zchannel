@@ -18,13 +18,15 @@ int main(int argc, char **argv)
     std::string vkFile = argv[2];
     std::string r1csFile = argv[3];
 
-    auto p = ZCJoinSplit::Generate();
+		for(size_t i = 0; i < 5; i++) {
+			auto p = ZCJoinSplit::Generate();
+			delete p;
+		}
 
-    p->saveProvingKey(pkFile);
-    p->saveVerifyingKey(vkFile);
-    p->saveR1CS(r1csFile);
+    // p->saveProvingKey(pkFile);
+    // p->saveVerifyingKey(vkFile);
+    // p->saveR1CS(r1csFile);
 
-    delete p;
 
     return 0;
 }
