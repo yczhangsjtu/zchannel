@@ -13,85 +13,126 @@ int main() {
 
 	int TIME = 1000;
 
-	cout << "Benchmarking normal use of schnorr signature ..." << endl;
+	cout << "Benchmarking normal keygen..." << endl;
 	start = std::chrono::system_clock::now();
 	for(int i = 0; i < TIME; i++)
 	{
 		// Test normal schnorr signature
-		auto keyAlice = SchnorrKeyPair::keygen();
-		auto auxKeyAlice = SchnorrKeyPair::keygen();
-		SchnorrSignature sig = keyAlice.sign(md);
-		// cout << "Alice Sig:" << sig.toHex() << endl;
-		assert(keyAlice.pubkey().verify(md,sig));
-		sig = keyAlice.signWithAux(md,auxKeyAlice);
-		// cout << "Alice Sig:" << sig.toHex() << endl;
-		assert(keyAlice.pubkey().verify(md,sig));
+		SchnorrKeyPair::keygen();
+	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 
-		// Test shared schnorr signature
-		auto keyBob = SchnorrKeyPair::keygen();
+	auto key = SchnorrKeyPair::keygen();
+	auto auxKey = SchnorrKeyPair::keygen();
+	SchnorrSignature sig;
 
-		SharedKeyPair keyShareAlice(keyAlice);
-		SharedKeyPair keyShareBob(keyBob);
+	cout << "Benchmarking normal sign..." << endl;
+	start = std::chrono::system_clock::now();
+	for(int i = 0; i < TIME; i++)
+		sig = key.sign(md);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
+
+	cout << "Benchmarking normal verify..." << endl;
+	start = std::chrono::system_clock::now();
+	for(int i = 0; i < TIME; i++)
+		assert(key.pubkey().verify(md,sig));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
+
+	cout << "Benchmarking sign with auxiliary key..." << endl;
+	start = std::chrono::system_clock::now();
+	for(int i = 0; i < TIME; i++)
+	{
+		sig = key.signWithAux(md,auxKey);
+		// cout << "Alice Sig:" << sig.toHex() << endl;
+		assert(key.pubkey().verify(md,sig));
+	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
+
+	SchnorrKeyPair keyAlice;
+	SchnorrKeyPair keyBob;
+	SharedKeyPair keyShareAlice;
+	SharedKeyPair keyShareBob;
+	// Benchmark shared schnorr signature
+	cout << "Benchmarking shared generation of schnorr key..." << endl;
+	start = std::chrono::system_clock::now();
+	for(int i = 0; i < TIME; i++)
+	{
+		keyAlice = SchnorrKeyPair::keygen();
+		keyBob = SchnorrKeyPair::keygen();
+		keyShareAlice = SharedKeyPair(keyAlice);
+		keyShareBob = SharedKeyPair(keyBob);
 		keyShareAlice.setRemote(keyBob.pubkey());
 		keyShareBob.setRemote(keyAlice.pubkey());
+	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 
-		// cout << "Alice's shared key: " << endl;
-		// keyShareAlice.print(2);
-		// cout << "Bob's shared key: " << endl;
-		// keyShareBob.print(2);
-
-		auto auxKeyBob = SchnorrKeyPair::keygen();
+	SchnorrKeyPair auxKeyBob;
+	SchnorrKeyPair auxKeyAlice;
+	cout << "Benchmarking shared generation of schnorr signature..." << endl;
+	for(int i = 0; i < TIME; i++)
+	{
+		auxKeyAlice = SchnorrKeyPair::keygen();
+		auxKeyBob = SchnorrKeyPair::keygen();
 		SharedKeyPair auxKeyShareAlice(auxKeyAlice);
 		SharedKeyPair auxKeyShareBob(auxKeyBob);
 		auxKeyShareAlice.setRemote(auxKeyBob.pubkey());
 		auxKeyShareBob.setRemote(auxKeyAlice.pubkey());
 
-		// cout << "Alice's aux shared key: " << endl;
-		// auxKeyShareAlice.print(2);
-		// cout << "Bob's aux shared key: " << endl;
-		// auxKeyShareBob.print(2);
-
 		auto sigAlice = keyShareAlice.sign(md,auxKeyShareAlice);
 		auto sigBob = keyShareBob.sign(md,auxKeyShareBob);
 		auto sigShare = sigAlice + sigBob;
-		// cout << "Alice's share of sig: " << sigAlice.toHex() << endl;
-		// cout << "Bob's share of sig:   " << sigBob.toHex() << endl;
-		// cout << "Final signature:      " << sigShare.toHex() << endl;
-
 		assert(keyShareAlice.verify(md,sigShare));
 	}
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	end_time = std::chrono::system_clock::to_time_t(end);
 	std::cout << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n";
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 
-	/*
-	auto sharedKeyPair = keyShareAlice.getSharedPubkey();
-	auto auxSharedKeyPair = auxKeyShareAlice.getSharedPubkey();
-	auto compareSig = sharedKeyPair.signWithAux(md,auxSharedKeyPair);
-	cout << "Compare signature:      " << compareSig.toHex() << endl;
-	if(sharedKeyPair.verify(md,compareSig))
-		cout << "    Verified!" << endl;
-	else
-		cout << "    Invalid signature!" << endl;
-		*/
-	cout << "Benchmarking distributed generation of schnorr signature" << endl;
 	SchnorrDKG<SHA256Digest> dkgAlice, dkgBob;
 
+	cout << "Benchmarking distributed generation of schnorr key" << endl;
 	start = std::chrono::system_clock::now();
-	// Key Agreement
-	auto keyGenAlice = dkgAlice.keyGenPubkey();
-	auto keyGenBob = dkgBob.keyGenCommit();
-	dkgAlice.receive(keyGenBob);
-	dkgBob.receive(keyGenAlice);
-	dkgAlice.receive(dkgBob.pubkey());
+	PubkeyOrCommitment keyGenAlice = Commitment();
+	PubkeyOrCommitment keyGenBob = Commitment();
+	for(int i = 0; i < TIME; i++)
+	{
+		dkgAlice = SchnorrDKG<SHA256Digest>();
+		dkgBob = SchnorrDKG<SHA256Digest>();
+		// Key Agreement
+		keyGenAlice = dkgAlice.keyGenPubkey();
+		keyGenBob = dkgBob.keyGenCommit();
+		dkgAlice.receive(keyGenBob);
+		dkgBob.receive(keyGenAlice);
+		dkgAlice.receive(dkgBob.pubkey());
+	}
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end-start;
 	end_time = std::chrono::system_clock::to_time_t(end);
 	std::cout << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time: " << elapsed_seconds.count() << "s\n";
+						<< "elapsed time: " << elapsed_seconds.count() << "s\n\n";
 	
+	cout << "Benchmarking distributed generation of schnorr signature (for one party)" << endl;
 	start = std::chrono::system_clock::now();
 	for(int i = 0; i < TIME; i++)
 	{
@@ -113,8 +154,9 @@ int main() {
 	elapsed_seconds = end-start;
 	end_time = std::chrono::system_clock::to_time_t(end);
 	std::cout << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n";
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 
+	cout << "Benchmarking distributed generation of schnorr signature (for both party)" << endl;
 	start = std::chrono::system_clock::now();
 	for(int i = 0; i < TIME; i++)
 	{
@@ -143,6 +185,6 @@ int main() {
 	elapsed_seconds = end-start;
 	end_time = std::chrono::system_clock::to_time_t(end);
 	std::cout << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n";
+						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 	return 0;
 }
