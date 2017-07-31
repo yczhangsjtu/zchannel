@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = testschnorr$(EXEEXT) benchschnorr$(EXEEXT)
+bin_PROGRAMS = testschnorr$(EXEEXT) benchschnorr$(EXEEXT) \
+	testchannel$(EXEEXT)
 subdir = channel
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -113,6 +114,11 @@ am_benchschnorr_OBJECTS = schnorr/dkg.$(OBJEXT) \
 benchschnorr_OBJECTS = $(am_benchschnorr_OBJECTS)
 am__DEPENDENCIES_1 =
 benchschnorr_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_testchannel_OBJECTS = test.$(OBJEXT) channel.$(OBJEXT) \
+	schnorr/digest.$(OBJEXT) schnorr/dkg.$(OBJEXT) \
+	schnorr/schnorr.$(OBJEXT)
+testchannel_OBJECTS = $(am_testchannel_OBJECTS)
+testchannel_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_testschnorr_OBJECTS = schnorr/dkg.$(OBJEXT) \
 	schnorr/schnorr.$(OBJEXT) schnorr/test.$(OBJEXT) \
 	schnorr/digest.$(OBJEXT)
@@ -147,8 +153,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(benchschnorr_SOURCES) $(testschnorr_SOURCES)
-DIST_SOURCES = $(benchschnorr_SOURCES) $(testschnorr_SOURCES)
+SOURCES = $(benchschnorr_SOURCES) $(testchannel_SOURCES) \
+	$(testschnorr_SOURCES)
+DIST_SOURCES = $(benchschnorr_SOURCES) $(testchannel_SOURCES) \
+	$(testschnorr_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -290,6 +298,8 @@ testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp schno
 testschnorr_LDADD = $(ADDLIBS)
 benchschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/bench.cpp schnorr/digest.cpp
 benchschnorr_LDADD = $(ADDLIBS)
+testchannel_SOURCES = test.cpp channel.cpp schnorr/digest.cpp schnorr/dkg.cpp schnorr/schnorr.cpp
+testchannel_LDADD = $(ADDLIBS)
 all: all-am
 
 .SUFFIXES:
@@ -383,6 +393,10 @@ schnorr/digest.$(OBJEXT): schnorr/$(am__dirstamp) \
 benchschnorr$(EXEEXT): $(benchschnorr_OBJECTS) $(benchschnorr_DEPENDENCIES) $(EXTRA_benchschnorr_DEPENDENCIES) 
 	@rm -f benchschnorr$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(benchschnorr_OBJECTS) $(benchschnorr_LDADD) $(LIBS)
+
+testchannel$(EXEEXT): $(testchannel_OBJECTS) $(testchannel_DEPENDENCIES) $(EXTRA_testchannel_DEPENDENCIES) 
+	@rm -f testchannel$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(testchannel_OBJECTS) $(testchannel_LDADD) $(LIBS)
 schnorr/test.$(OBJEXT): schnorr/$(am__dirstamp) \
 	schnorr/$(DEPDIR)/$(am__dirstamp)
 
@@ -397,6 +411,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/digest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/dkg.Po@am__quote@
@@ -545,7 +561,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf schnorr/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) schnorr/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -591,7 +607,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf schnorr/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) schnorr/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
