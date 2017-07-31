@@ -27,21 +27,21 @@ int main(int argc, char **argv)
 
     // construct a proof.
 
-    // for (int i = 0; i < 5; i++) {
-		uint256 anchor = ZCIncrementalMerkleTree().root();
-		uint256 pubKeyHash;
-		BHeight BH1=0,BH2=0,MBH=1000;
-		bool ovd1,ovd2;
+    for (int i = 0; i < 15; i++) {
+			uint256 anchor = ZCIncrementalMerkleTree().root();
+			uint256 pubKeyHash;
+			BHeight BH1=0,BH2=0,MBH=1000;
+			bool ovd1,ovd2;
 
-		JSDescription jsdesc(*p,
-												 pubKeyHash,
-												 MBH,
-												 {BH1,BH2},
-												 {ovd1,ovd2},
-												 {anchor, anchor},
-												 {JSInput(), JSInput()},
-												 {JSOutput(), JSOutput()},
-												 0,
-												 0);
-    // }
+			JSDescription jsdesc(*p,
+													 pubKeyHash,
+													 MBH,
+													 {BH1,BH2},
+													 {ovd1,ovd2},
+													 {anchor, anchor},
+													 {JSInput(), JSInput()},
+													 {JSOutput(), JSOutput()},
+													 0,
+													 0);
+    }
 }
