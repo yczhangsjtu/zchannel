@@ -148,8 +148,10 @@ public:
 	PubkeyOrCommitment sign(const DigestType &md, int sendWhat, int forWho);
 	inline PubkeyOrCommitment signCommitForMe(const DigestType &md){return sign(md,SEND_COMMIT,FOR_ME);}
 	inline PubkeyOrCommitment signCommitForOther(const DigestType &md){return sign(md,SEND_COMMIT,FOR_OTHER);}
+	inline PubkeyOrCommitment signCommitForBoth(const DigestType &md){return sign(md,SEND_COMMIT,FOR_ME|FOR_OTHER);}
 	inline PubkeyOrCommitment signPubkeyForMe(const DigestType &md){return sign(md,SEND_PUBKEY,FOR_ME);}
 	inline PubkeyOrCommitment signPubkeyForOther(const DigestType &md){return sign(md,SEND_PUBKEY,FOR_OTHER);}
+	inline PubkeyOrCommitment signPubkeyForBoth(const DigestType &md){return sign(md,SEND_PUBKEY,FOR_ME|FOR_OTHER);}
 	SharedSignature receiveAux(const PubkeyOrCommitment &pubkeycommit);
 	SchnorrSignature receiveSig(const SharedSignature &sig);
 };

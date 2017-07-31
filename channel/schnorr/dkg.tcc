@@ -34,7 +34,8 @@ PubkeyOrCommitment SchnorrDKG<DigestType>::sign(const DigestType &md, int sendWh
 	assert(state == READY);
 	digest = md;
 	auxKeypair = SharedKeyPair(SchnorrKeyPair::keygen());
-	forme = forWho == FOR_ME;
+	forme    = forWho & FOR_ME;
+	forother = forWho & FOR_OTHER;
 	if(sendWhat == SEND_COMMIT) {
 		PubkeyOrCommitment pubkeycommit(auxKeypair.getKeypair().commit());
 		state = WAIT_AUX;
@@ -53,18 +54,16 @@ SharedSignature SchnorrDKG<DigestType>::receiveAux(const PubkeyOrCommitment &pub
 		assert(pubkeycommit.isPubkey());
 		auxKeypair.setRemote(pubkeycommit.asConstPubkey());
 		signature = keypair.sign(digest,auxKeypair);
-		if(forme) {
-			state = WAIT_SIG_SHARE;
-			return SharedSignature();
-		} else {
-			state = READY;
-			return signature;
-		}
+		if(forme) state = WAIT_SIG_SHARE;
+		else state = READY;
+		if(!forother) return SharedSignature();
+		else return signature;
 	} else if(state == WAIT_AUX_COMMIT) {
 		assert(pubkeycommit.isCommit());
 		pubkeyCommit = pubkeycommit.asConstCommit();
 		state = WAIT_AUX;
-		return SharedSignature();
+		if(!forother) return SharedSignature();
+		else return signature;
 	} else {
 		assert(0);
 	}
@@ -75,5 +74,6 @@ SchnorrSignature SchnorrDKG<DigestType>::receiveSig(const SharedSignature &sig) 
 	assert(state == WAIT_SIG_SHARE);
 	auto finalSig = signature + sig;
 	assert(keypair.verify(digest,finalSig));
+	state = READY;
 	return finalSig;
 }
