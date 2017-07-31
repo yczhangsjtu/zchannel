@@ -21,9 +21,9 @@ int main(int argc, char **argv)
     std::string vkFile = argv[2];
 
     auto p = ZCJoinSplit::Unopened();
-    p->loadVerifyingKey(vkFile);
-    p->setProvingKeyPath(pkFile);
-    p->loadProvingKey();
+    // p->loadVerifyingKey(vkFile);
+    // p->setProvingKeyPath(pkFile);
+    // p->loadProvingKey();
 
     // construct a proof.
 
