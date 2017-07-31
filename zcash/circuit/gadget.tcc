@@ -271,7 +271,7 @@ class joinsplit_gadget : gadget<FieldT> {
 								annotation+" ladd=boolean"
 								);
 					}
-					// ladd < 2^63
+					// radd < 2^63
 					generate_r1cs_equals_const_constraint<FieldT>(this->pb, radd64[i][MSB_POS], FieldT::zero(), annotation+" radd[MSB]=ZERO");
 					for (size_t j = 0; j < 64; j++) {
 						generate_boolean_r1cs_constraint<FieldT>(
@@ -282,6 +282,7 @@ class joinsplit_gadget : gadget<FieldT> {
 					}
 					linear_combination<FieldT> left_side = packed_addition(bh64[i]);
 					left_side = left_side + packed_addition(tlock64[i]);
+					left_side = left_side + packed_addition(ladd64[i]);
 
 					linear_combination<FieldT> right_side = packed_addition(mbh64);
 					right_side = right_side + packed_addition(radd64[i]);

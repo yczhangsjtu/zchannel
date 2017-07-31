@@ -213,9 +213,9 @@ namespace libzcash {
 						const boost::array<bool, ZC_NUM_JS_INPUTS>& ovd, // to be handled
 						bool computeProof
 						) {
-					// if (computeProof && !pk) {
-					// 	throw std::runtime_error("JoinSplit proving key not loaded");
-					// }
+					if (computeProof && !pk) {
+						throw std::runtime_error("JoinSplit proving key not loaded");
+					}
 
 					if (vpub_old > MAX_MONEY) {
 						throw std::invalid_argument("nonsensical vpub_old value");

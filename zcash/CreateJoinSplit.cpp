@@ -21,18 +21,17 @@ int main(int argc, char **argv)
     std::string vkFile = argv[2];
 
     auto p = ZCJoinSplit::Unopened();
-    // p->loadVerifyingKey(vkFile);
-    // p->setProvingKeyPath(pkFile);
-    // p->loadProvingKey();
+    p->loadVerifyingKey(vkFile);
+    p->setProvingKeyPath(pkFile);
+    p->loadProvingKey();
 
     // construct a proof.
 
     // for (int i = 0; i < 5; i++) {
 		uint256 anchor = ZCIncrementalMerkleTree().root();
 		uint256 pubKeyHash;
-		BHeight BH1,BH2,MBH;
+		BHeight BH1=0,BH2=0,MBH=1000;
 		bool ovd1,ovd2;
-		MBH = 1000;
 
 		JSDescription jsdesc(*p,
 												 pubKeyHash,

@@ -148,7 +148,9 @@ generate_OBJECTS = $(am_generate_OBJECTS)
 generate_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_testcircuit_OBJECTS = TestCircuit.$(OBJEXT) util.$(OBJEXT) \
 	uint256.$(OBJEXT) crypto/sha256.$(OBJEXT) \
-	utilstrencodings.$(OBJEXT)
+	utilstrencodings.$(OBJEXT) Note.$(OBJEXT) \
+	NoteEncryption.$(OBJEXT) support/cleanse.$(OBJEXT) \
+	prf.$(OBJEXT)
 testcircuit_OBJECTS = $(am_testcircuit_OBJECTS)
 testcircuit_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -347,7 +349,8 @@ createjs_SOURCES = CreateJoinSplit.cpp Address.cpp amount.cpp hash.cpp \
 	script/zcashconsensus.cpp
 
 testcircuit_SOURCES = TestCircuit.cpp util.cpp uint256.cpp crypto/sha256.cpp \
-											utilstrencodings.cpp
+											utilstrencodings.cpp Note.cpp NoteEncryption.cpp \
+											support/cleanse.cpp prf.cpp
 
 generate_LDADD = $(LIBPATH) $(ADDLIBS)
 createjs_LDADD = $(LIBPATH) $(ADDLIBS)

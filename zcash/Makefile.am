@@ -28,7 +28,8 @@ createjs_SOURCES = CreateJoinSplit.cpp Address.cpp amount.cpp hash.cpp \
 	script/sigcache.cpp script/sign.cpp script/standard.cpp \
 	script/zcashconsensus.cpp
 testcircuit_SOURCES = TestCircuit.cpp util.cpp uint256.cpp crypto/sha256.cpp \
-											utilstrencodings.cpp
+											utilstrencodings.cpp Note.cpp NoteEncryption.cpp \
+											support/cleanse.cpp prf.cpp
 
 generate_LDADD = $(LIBPATH) $(ADDLIBS)
 createjs_LDADD = $(LIBPATH) $(ADDLIBS)

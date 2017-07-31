@@ -9,9 +9,11 @@
 #include "crypto/sha256.h"
 #include "crypto/common.h"
 #include "uint256.h"
+#include "Note.hpp"
 #include "util.h"
 
 using namespace libsnark;
+using namespace libzcash;
 
 #include "circuit/utils.tcc"
 #include "circuit/commitment.tcc"
@@ -77,6 +79,10 @@ bool test_note_commitment_gadget()
 	ncmgadget.generate_r1cs_witness();
 	result->bits.fill_with_bits(pb,uint256_to_bool_vector(result_data));
 
+	cout << "Expected SHA256: " << result_data.GetHex() << endl;
+	Note note(apk_data,v_data,rho_data,r_data,pkc_data,t_data);
+	cout << "Note SHA256:     " << note.cm().GetHex() << endl;
+
 	/*
 	std::vector<FieldT> primary_input = pb.primary_input();
 	std::vector<FieldT> aux_input = pb.auxiliary_input();
@@ -118,7 +124,7 @@ bool test_input_note_commitment_gadget()
 	generate_r1cs_equals_const_constraint<FieldT>(pb,ZERO,FieldT::zero(),"ZERO=0");
 
 	uint256 apk_data = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-	uint256 ask_data = uint256S("00000000000000000000000000000000000000000000000000000000000000F0");
+	uint252 ask_data = uint252(uint256S("0000000000000000000000000000000000000000000000000000000000000000"));
 	uint256 rho_data = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
 	uint256 r_data   = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
 	uint256 pkh_data = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
@@ -130,7 +136,7 @@ bool test_input_note_commitment_gadget()
 
 	pb.val(ZERO) = FieldT::zero();
 	a_pk.fill_with_bits (pb,uint256_to_bool_vector(apk_data));
-	a_sk.fill_with_bits (pb,trailing252(uint256_to_bool_vector(ask_data)));
+	a_sk.fill_with_bits (pb,uint252_to_bool_vector(ask_data));
 	rho.fill_with_bits  (pb,uint256_to_bool_vector(rho_data));
 	r.fill_with_bits    (pb,uint256_to_bool_vector(r_data));
 	pkh.fill_with_bits  (pb,uint256_to_bool_vector(pkh_data));
@@ -163,6 +169,13 @@ bool test_input_note_commitment_gadget()
 	pb.constraint_system.swap_AB_if_beneficial();
 	r1cs_ppzksnark_prover<ppzksnark_ppT>(*pk,primary_input,aux_input,pb.constraint_system);
 	*/
+
+	cout << "Expected SHA256: " << result_data.GetHex() << endl;
+	cout << "Expected PKCM:   " << pkcm_data.GetHex() << endl;
+	Note note(apk_data,v_data,rho_data,r_data,pkcm_data,t_data,pkh_data);
+	note.pkcm = note.getPkcm(uint252(ask_data));
+	cout << "Note PKCM:       " << note.pkcm.GetHex() << endl;
+	cout << "Note SHA256:     " << note.cm().GetHex() << endl;
 
 	return pb.is_satisfied();
 }
