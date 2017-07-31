@@ -27,16 +27,16 @@ int main(int argc, char **argv)
 
     // construct a proof.
 
-    // for (int i = 0; i < 5; i++) {
-		uint256 anchor = ZCIncrementalMerkleTree().root();
-		uint256 pubKeyHash;
+		for (int i = 0; i < 15; i++) {
+			uint256 anchor = ZCIncrementalMerkleTree().root();
+			uint256 pubKeyHash;
 
-		JSDescription jsdesc(*p,
-												 pubKeyHash,
-												 anchor,
-												 {JSInput(), JSInput()},
-												 {JSOutput(), JSOutput()},
-												 0,
-												 0);
-    // }
+			JSDescription jsdesc(*p,
+					pubKeyHash,
+					anchor,
+					{JSInput(), JSInput()},
+					{JSOutput(), JSOutput()},
+					0,
+					0);
+		}
 }
