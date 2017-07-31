@@ -1,0 +1,396 @@
+Saving pk vk r1cs to /tmp
+(enter) Call to r1cs_ppzksnark_generator   	[             ]	(1501476659.3518s x0.00 from start)
+  (enter) Call to r1cs_constraint_system::swap_AB_if_beneficial	[             ]	(1501476659.9478s x0.00 from start)
+    (enter) Estimate densities                 	[             ]	(1501476659.9479s x0.00 from start)
+      * Non-zero A-count (estimate): 1141154
+      * Non-zero B-count (estimate): 1379738
+    (leave) Estimate densities                 	[0.1794s x1.00]	(1501476660.1273s x0.00 from start)
+    (enter) Perform the swap                   	[             ]	(1501476660.1273s x0.00 from start)
+    (leave) Perform the swap                   	[0.0605s x1.00]	(1501476660.1878s x0.00 from start)
+  (leave) Call to r1cs_constraint_system::swap_AB_if_beneficial	[0.2401s x1.00]	(1501476660.1879s x0.00 from start)
+  (enter) Call to r1cs_to_qap_instance_map_with_evaluation	[             ]	(1501476660.1879s x0.00 from start)
+    * Selected domain: basic_radix2
+    (enter) Compute evaluations of A, B, C, H at t	[             ]	(1501476660.2529s x0.00 from start)
+    (leave) Compute evaluations of A, B, C, H at t	[7.2804s x1.00]	(1501476667.5332s x0.00 from start)
+  (leave) Call to r1cs_to_qap_instance_map_with_evaluation	[7.3454s x1.00]	(1501476667.5333s x0.00 from start)
+  * QAP number of variables: 1887090
+  * QAP pre degree: 2068650
+  * QAP degree: 2097152
+  * QAP number of input variables: 9
+  (enter) Compute query densities            	[             ]	(1501476667.5333s x0.00 from start)
+  (leave) Compute query densities            	[0.0612s x1.00]	(1501476667.5945s x0.00 from start)
+  Choosing window size 20 for 11258419 elements
+  Choosing window size 17 for 1141154 elements
+  * G1 window: 20
+  * G2 window: 17
+  (enter) Generating G1 multiexp table       	[             ]	(1501476668.2773s x0.00 from start)
+  (leave) Generating G1 multiexp table       	[15.3818s x1.00]	(1501476683.6590s x0.00 from start)
+  (enter) Generating G2 multiexp table       	[             ]	(1501476683.6591s x0.00 from start)
+  (leave) Generating G2 multiexp table       	[11.4644s x1.00]	(1501476695.1235s x0.00 from start)
+  (enter) Generate R1CS proving key          	[             ]	(1501476695.1235s x0.00 from start)
+    (enter) Generate knowledge commitments     	[             ]	(1501476695.1235s x0.00 from start)
+      (enter) Compute the A-query                	[             ]	(1501476695.1236s x0.00 from start)
+      Non-zero coordinate count: 1379738/1887092 (73.11%)
+      (leave) Compute the A-query                	[49.1744s x1.00]	(1501476744.2980s x0.00 from start)
+      (enter) Compute the B-query                	[             ]	(1501476744.2980s x0.00 from start)
+      Non-zero coordinate count: 1141155/1887092 (60.47%)
+      (leave) Compute the B-query                	[120.9955s x1.00]	(1501476865.2935s x0.00 from start)
+      (enter) Compute the C-query                	[             ]	(1501476865.2936s x0.00 from start)
+      Non-zero coordinate count: 1686772/1887092 (89.38%)
+      (leave) Compute the C-query                	[59.0705s x1.00]	(1501476924.3641s x0.00 from start)
+      (enter) Compute the H-query                	[             ]	(1501476924.3641s x0.00 from start)
+      .................................................................................................................................................................................................................. DONE!
+      (leave) Compute the H-query                	[36.6399s x1.00]	(1501476961.0041s x0.00 from start)
+      (enter) Compute the K-query                	[             ]	(1501476961.0041s x0.00 from start)
+      ............................................................................................................................................................................................. DONE!
+      (leave) Compute the K-query                	[35.8284s x1.00]	(1501476996.8325s x0.00 from start)
+    (leave) Generate knowledge commitments     	[301.7090s x1.00]	(1501476996.8326s x0.00 from start)
+  (leave) Generate R1CS proving key          	[301.7090s x1.00]	(1501476996.8326s x0.00 from start)
+  (enter) Generate R1CS verification key     	[             ]	(1501476996.8326s x0.00 from start)
+    (enter) Encode IC query for R1CS verification key	[             ]	(1501476996.8407s x0.00 from start)
+      . DONE!
+    (leave) Encode IC query for R1CS verification key	[0.0005s x1.00]	(1501476996.8411s x0.00 from start)
+  (leave) Generate R1CS verification key     	[0.0086s x1.00]	(1501476996.8412s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_generator   	[337.4894s x1.00]	(1501476996.8412s x0.00 from start)
+* G1 elements in PK: 13419707
+* Non-zero G1 elements in PK: 11258422
+* G2 elements in PK: 1887092
+* Non-zero G2 elements in PK: 1141155
+* PK size in bits: 3721036065
+* G1 elements in VK: 11
+* G2 elements in VK: 5
+* VK size in bits: 6181
+(enter) Call to r1cs_ppzksnark_verifier_process_vk	[             ]	(1501476997.4280s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4280s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4286s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4286s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4291s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501476997.4291s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.03]	(1501476997.4291s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4291s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4296s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4296s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4301s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4301s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4306s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501476997.4306s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.05]	(1501476997.4306s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501476997.4306s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501476997.4311s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_verifier_process_vk	[0.0031s x1.00]	(1501476997.4312s x0.00 from start)
+(enter) Call to r1cs_ppzksnark_generator   	[             ]	(1501477001.8013s x0.00 from start)
+  (enter) Call to r1cs_constraint_system::swap_AB_if_beneficial	[             ]	(1501477002.0135s x0.00 from start)
+    (enter) Estimate densities                 	[             ]	(1501477002.0135s x0.00 from start)
+      * Non-zero A-count (estimate): 1141154
+      * Non-zero B-count (estimate): 1379738
+    (leave) Estimate densities                 	[0.0653s x1.00]	(1501477002.0788s x0.00 from start)
+    (enter) Perform the swap                   	[             ]	(1501477002.0788s x0.00 from start)
+    (leave) Perform the swap                   	[0.0255s x1.00]	(1501477002.1043s x0.00 from start)
+  (leave) Call to r1cs_constraint_system::swap_AB_if_beneficial	[0.0908s x1.00]	(1501477002.1044s x0.00 from start)
+  (enter) Call to r1cs_to_qap_instance_map_with_evaluation	[             ]	(1501477002.1044s x0.00 from start)
+    * Selected domain: basic_radix2
+    (enter) Compute evaluations of A, B, C, H at t	[             ]	(1501477002.1356s x0.00 from start)
+    (leave) Compute evaluations of A, B, C, H at t	[7.2002s x1.00]	(1501477009.3358s x0.00 from start)
+  (leave) Call to r1cs_to_qap_instance_map_with_evaluation	[7.2315s x1.00]	(1501477009.3359s x0.00 from start)
+  * QAP number of variables: 1887090
+  * QAP pre degree: 2068650
+  * QAP degree: 2097152
+  * QAP number of input variables: 9
+  (enter) Compute query densities            	[             ]	(1501477009.3359s x0.00 from start)
+  (leave) Compute query densities            	[0.0212s x1.00]	(1501477009.3571s x0.00 from start)
+  Choosing window size 20 for 11258419 elements
+  Choosing window size 17 for 1141154 elements
+  * G1 window: 20
+  * G2 window: 17
+  (enter) Generating G1 multiexp table       	[             ]	(1501477009.8787s x0.00 from start)
+  (leave) Generating G1 multiexp table       	[15.4979s x1.00]	(1501477025.3766s x0.00 from start)
+  (enter) Generating G2 multiexp table       	[             ]	(1501477025.3766s x0.00 from start)
+  (leave) Generating G2 multiexp table       	[11.3073s x1.00]	(1501477036.6840s x0.00 from start)
+  (enter) Generate R1CS proving key          	[             ]	(1501477036.6840s x0.00 from start)
+    (enter) Generate knowledge commitments     	[             ]	(1501477036.6840s x0.00 from start)
+      (enter) Compute the A-query                	[             ]	(1501477036.6840s x0.00 from start)
+      Non-zero coordinate count: 1379738/1887092 (73.11%)
+      (leave) Compute the A-query                	[48.8256s x0.99]	(1501477085.5096s x0.00 from start)
+      (enter) Compute the B-query                	[             ]	(1501477085.5097s x0.00 from start)
+      Non-zero coordinate count: 1141155/1887092 (60.47%)
+      (leave) Compute the B-query                	[120.8033s x1.00]	(1501477206.3130s x0.00 from start)
+      (enter) Compute the C-query                	[             ]	(1501477206.3130s x0.00 from start)
+      Non-zero coordinate count: 1686772/1887092 (89.38%)
+      (leave) Compute the C-query                	[59.7111s x1.00]	(1501477266.0241s x0.00 from start)
+      (enter) Compute the H-query                	[             ]	(1501477266.0242s x0.00 from start)
+      .................................................................................................................................................................................................................. DONE!
+      (leave) Compute the H-query                	[36.4964s x1.00]	(1501477302.5206s x0.00 from start)
+      (enter) Compute the K-query                	[             ]	(1501477302.5206s x0.00 from start)
+      ............................................................................................................................................................................................. DONE!
+      (leave) Compute the K-query                	[32.6496s x1.00]	(1501477335.1702s x0.00 from start)
+    (leave) Generate knowledge commitments     	[298.4862s x1.00]	(1501477335.1702s x0.00 from start)
+  (leave) Generate R1CS proving key          	[298.4862s x1.00]	(1501477335.1702s x0.00 from start)
+  (enter) Generate R1CS verification key     	[             ]	(1501477335.1702s x0.00 from start)
+    (enter) Encode IC query for R1CS verification key	[             ]	(1501477335.1782s x0.00 from start)
+      . DONE!
+    (leave) Encode IC query for R1CS verification key	[0.0005s x1.00]	(1501477335.1786s x0.00 from start)
+  (leave) Generate R1CS verification key     	[0.0085s x1.00]	(1501477335.1786s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_generator   	[333.3774s x1.00]	(1501477335.1787s x0.00 from start)
+* G1 elements in PK: 13419707
+* Non-zero G1 elements in PK: 11258422
+* G2 elements in PK: 1887092
+* Non-zero G2 elements in PK: 1141155
+* PK size in bits: 3721036065
+* G1 elements in VK: 11
+* G2 elements in VK: 5
+* VK size in bits: 6181
+(enter) Call to r1cs_ppzksnark_verifier_process_vk	[             ]	(1501477335.7675s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7676s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7681s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7681s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7686s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501477335.7686s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.05]	(1501477335.7686s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7687s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7692s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7692s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7697s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7697s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7702s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501477335.7702s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.04]	(1501477335.7702s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477335.7702s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477335.7707s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_verifier_process_vk	[0.0032s x1.00]	(1501477335.7707s x0.00 from start)
+(enter) Call to r1cs_ppzksnark_generator   	[             ]	(1501477340.1146s x0.00 from start)
+  (enter) Call to r1cs_constraint_system::swap_AB_if_beneficial	[             ]	(1501477340.3268s x0.00 from start)
+    (enter) Estimate densities                 	[             ]	(1501477340.3268s x0.00 from start)
+      * Non-zero A-count (estimate): 1141154
+      * Non-zero B-count (estimate): 1379738
+    (leave) Estimate densities                 	[0.0651s x1.00]	(1501477340.3919s x0.00 from start)
+    (enter) Perform the swap                   	[             ]	(1501477340.3919s x0.00 from start)
+    (leave) Perform the swap                   	[0.0255s x1.00]	(1501477340.4174s x0.00 from start)
+  (leave) Call to r1cs_constraint_system::swap_AB_if_beneficial	[0.0907s x1.00]	(1501477340.4174s x0.00 from start)
+  (enter) Call to r1cs_to_qap_instance_map_with_evaluation	[             ]	(1501477340.4174s x0.00 from start)
+    * Selected domain: basic_radix2
+    (enter) Compute evaluations of A, B, C, H at t	[             ]	(1501477340.4487s x0.00 from start)
+    (leave) Compute evaluations of A, B, C, H at t	[6.9842s x1.00]	(1501477347.4329s x0.00 from start)
+  (leave) Call to r1cs_to_qap_instance_map_with_evaluation	[7.0155s x1.00]	(1501477347.4329s x0.00 from start)
+  * QAP number of variables: 1887090
+  * QAP pre degree: 2068650
+  * QAP degree: 2097152
+  * QAP number of input variables: 9
+  (enter) Compute query densities            	[             ]	(1501477347.4329s x0.00 from start)
+  (leave) Compute query densities            	[0.0212s x1.00]	(1501477347.4542s x0.00 from start)
+  Choosing window size 20 for 11258419 elements
+  Choosing window size 17 for 1141154 elements
+  * G1 window: 20
+  * G2 window: 17
+  (enter) Generating G1 multiexp table       	[             ]	(1501477347.9734s x0.00 from start)
+  (leave) Generating G1 multiexp table       	[15.2457s x1.00]	(1501477363.2191s x0.00 from start)
+  (enter) Generating G2 multiexp table       	[             ]	(1501477363.2192s x0.00 from start)
+  (leave) Generating G2 multiexp table       	[11.2421s x1.00]	(1501477374.4612s x0.00 from start)
+  (enter) Generate R1CS proving key          	[             ]	(1501477374.4613s x0.00 from start)
+    (enter) Generate knowledge commitments     	[             ]	(1501477374.4613s x0.00 from start)
+      (enter) Compute the A-query                	[             ]	(1501477374.4613s x0.00 from start)
+      Non-zero coordinate count: 1379738/1887092 (73.11%)
+      (leave) Compute the A-query                	[49.7337s x1.00]	(1501477424.1950s x0.00 from start)
+      (enter) Compute the B-query                	[             ]	(1501477424.1950s x0.00 from start)
+      Non-zero coordinate count: 1141155/1887092 (60.47%)
+      (leave) Compute the B-query                	[125.7412s x1.00]	(1501477549.9362s x0.00 from start)
+      (enter) Compute the C-query                	[             ]	(1501477549.9363s x0.00 from start)
+      Non-zero coordinate count: 1686772/1887092 (89.38%)
+      (leave) Compute the C-query                	[58.7849s x1.00]	(1501477608.7212s x0.00 from start)
+      (enter) Compute the H-query                	[             ]	(1501477608.7212s x0.00 from start)
+      .................................................................................................................................................................................................................. DONE!
+      (leave) Compute the H-query                	[36.2378s x1.00]	(1501477644.9591s x0.00 from start)
+      (enter) Compute the K-query                	[             ]	(1501477644.9591s x0.00 from start)
+      ............................................................................................................................................................................................. DONE!
+      (leave) Compute the K-query                	[32.5925s x1.00]	(1501477677.5516s x0.00 from start)
+    (leave) Generate knowledge commitments     	[303.0904s x1.00]	(1501477677.5516s x0.00 from start)
+  (leave) Generate R1CS proving key          	[303.0904s x1.00]	(1501477677.5517s x0.00 from start)
+  (enter) Generate R1CS verification key     	[             ]	(1501477677.5517s x0.00 from start)
+    (enter) Encode IC query for R1CS verification key	[             ]	(1501477677.5597s x0.00 from start)
+      . DONE!
+    (leave) Encode IC query for R1CS verification key	[0.0005s x1.00]	(1501477677.5602s x0.00 from start)
+  (leave) Generate R1CS verification key     	[0.0085s x1.00]	(1501477677.5602s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_generator   	[337.4456s x1.00]	(1501477677.5602s x0.00 from start)
+* G1 elements in PK: 13419707
+* Non-zero G1 elements in PK: 11258422
+* G2 elements in PK: 1887092
+* Non-zero G2 elements in PK: 1141155
+* PK size in bits: 3721036065
+* G1 elements in VK: 11
+* G2 elements in VK: 5
+* VK size in bits: 6181
+(enter) Call to r1cs_ppzksnark_verifier_process_vk	[             ]	(1501477678.1499s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1499s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1504s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1504s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1509s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501477678.1509s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.05]	(1501477678.1509s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1509s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1515s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1515s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1520s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1520s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1525s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501477678.1525s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.05]	(1501477678.1525s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501477678.1525s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501477678.1530s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_verifier_process_vk	[0.0032s x1.00]	(1501477678.1530s x0.00 from start)
+(enter) Call to r1cs_ppzksnark_generator   	[             ]	(1501477682.4983s x0.00 from start)
+  (enter) Call to r1cs_constraint_system::swap_AB_if_beneficial	[             ]	(1501477682.7108s x0.00 from start)
+    (enter) Estimate densities                 	[             ]	(1501477682.7108s x0.00 from start)
+      * Non-zero A-count (estimate): 1141154
+      * Non-zero B-count (estimate): 1379738
+    (leave) Estimate densities                 	[0.0652s x1.00]	(1501477682.7760s x0.00 from start)
+    (enter) Perform the swap                   	[             ]	(1501477682.7761s x0.00 from start)
+    (leave) Perform the swap                   	[0.0255s x1.00]	(1501477682.8015s x0.00 from start)
+  (leave) Call to r1cs_constraint_system::swap_AB_if_beneficial	[0.0908s x1.00]	(1501477682.8016s x0.00 from start)
+  (enter) Call to r1cs_to_qap_instance_map_with_evaluation	[             ]	(1501477682.8016s x0.00 from start)
+    * Selected domain: basic_radix2
+    (enter) Compute evaluations of A, B, C, H at t	[             ]	(1501477682.8328s x0.00 from start)
+    (leave) Compute evaluations of A, B, C, H at t	[6.9775s x1.00]	(1501477689.8103s x0.00 from start)
+  (leave) Call to r1cs_to_qap_instance_map_with_evaluation	[7.0088s x1.00]	(1501477689.8104s x0.00 from start)
+  * QAP number of variables: 1887090
+  * QAP pre degree: 2068650
+  * QAP degree: 2097152
+  * QAP number of input variables: 9
+  (enter) Compute query densities            	[             ]	(1501477689.8104s x0.00 from start)
+  (leave) Compute query densities            	[0.0212s x1.00]	(1501477689.8316s x0.00 from start)
+  Choosing window size 20 for 11258419 elements
+  Choosing window size 17 for 1141154 elements
+  * G1 window: 20
+  * G2 window: 17
+  (enter) Generating G1 multiexp table       	[             ]	(1501477690.3524s x0.00 from start)
+  (leave) Generating G1 multiexp table       	[15.2457s x1.00]	(1501477705.5981s x0.00 from start)
+  (enter) Generating G2 multiexp table       	[             ]	(1501477705.5981s x0.00 from start)
+  (leave) Generating G2 multiexp table       	[11.2553s x1.00]	(1501477716.8534s x0.00 from start)
+  (enter) Generate R1CS proving key          	[             ]	(1501477716.8535s x0.00 from start)
+    (enter) Generate knowledge commitments     	[             ]	(1501477716.8535s x0.00 from start)
+      (enter) Compute the A-query                	[             ]	(1501477716.8535s x0.00 from start)
+      Non-zero coordinate count: 1379738/1887092 (73.11%)
+      (leave) Compute the A-query                	[48.4252s x1.00]	(1501477765.2787s x0.00 from start)
+      (enter) Compute the B-query                	[             ]	(1501477765.2787s x0.00 from start)
+      Non-zero coordinate count: 1141155/1887092 (60.47%)
+      (leave) Compute the B-query                	[124.8700s x1.00]	(1501477890.1487s x0.00 from start)
+      (enter) Compute the C-query                	[             ]	(1501477890.1488s x0.00 from start)
+      Non-zero coordinate count: 1686772/1887092 (89.38%)
+      (leave) Compute the C-query                	[66.1769s x1.00]	(1501477956.3257s x0.00 from start)
+      (enter) Compute the H-query                	[             ]	(1501477956.3257s x0.00 from start)
+      .................................................................................................................................................................................................................. DONE!
+      (leave) Compute the H-query                	[38.1973s x1.00]	(1501477994.5230s x0.00 from start)
+      (enter) Compute the K-query                	[             ]	(1501477994.5230s x0.00 from start)
+      ............................................................................................................................................................................................. DONE!
+      (leave) Compute the K-query                	[33.7095s x1.00]	(1501478028.2325s x0.00 from start)
+    (leave) Generate knowledge commitments     	[311.3791s x1.00]	(1501478028.2326s x0.00 from start)
+  (leave) Generate R1CS proving key          	[311.3791s x1.00]	(1501478028.2326s x0.00 from start)
+  (enter) Generate R1CS verification key     	[             ]	(1501478028.2326s x0.00 from start)
+    (enter) Encode IC query for R1CS verification key	[             ]	(1501478028.2406s x0.00 from start)
+      . DONE!
+    (leave) Encode IC query for R1CS verification key	[0.0005s x1.00]	(1501478028.2411s x0.00 from start)
+  (leave) Generate R1CS verification key     	[0.0086s x1.00]	(1501478028.2411s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_generator   	[345.7428s x1.00]	(1501478028.2412s x0.00 from start)
+* G1 elements in PK: 13419707
+* Non-zero G1 elements in PK: 11258422
+* G2 elements in PK: 1887092
+* Non-zero G2 elements in PK: 1141155
+* PK size in bits: 3721036065
+* G1 elements in VK: 11
+* G2 elements in VK: 5
+* VK size in bits: 6181
+(enter) Call to r1cs_ppzksnark_verifier_process_vk	[             ]	(1501478028.8295s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8295s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8301s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8301s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8306s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501478028.8306s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.05]	(1501478028.8306s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8306s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8311s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8311s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8316s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8316s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8321s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501478028.8321s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.04]	(1501478028.8321s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478028.8321s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478028.8326s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_verifier_process_vk	[0.0031s x1.00]	(1501478028.8327s x0.00 from start)
+(enter) Call to r1cs_ppzksnark_generator   	[             ]	(1501478033.5231s x0.00 from start)
+  (enter) Call to r1cs_constraint_system::swap_AB_if_beneficial	[             ]	(1501478033.7357s x0.00 from start)
+    (enter) Estimate densities                 	[             ]	(1501478033.7357s x0.00 from start)
+      * Non-zero A-count (estimate): 1141154
+      * Non-zero B-count (estimate): 1379738
+    (leave) Estimate densities                 	[0.0652s x1.00]	(1501478033.8009s x0.00 from start)
+    (enter) Perform the swap                   	[             ]	(1501478033.8010s x0.00 from start)
+    (leave) Perform the swap                   	[0.0255s x1.00]	(1501478033.8264s x0.00 from start)
+  (leave) Call to r1cs_constraint_system::swap_AB_if_beneficial	[0.0907s x1.00]	(1501478033.8265s x0.00 from start)
+  (enter) Call to r1cs_to_qap_instance_map_with_evaluation	[             ]	(1501478033.8265s x0.00 from start)
+    * Selected domain: basic_radix2
+    (enter) Compute evaluations of A, B, C, H at t	[             ]	(1501478033.8578s x0.00 from start)
+    (leave) Compute evaluations of A, B, C, H at t	[6.9830s x1.00]	(1501478040.8408s x0.00 from start)
+  (leave) Call to r1cs_to_qap_instance_map_with_evaluation	[7.0144s x1.00]	(1501478040.8408s x0.00 from start)
+  * QAP number of variables: 1887090
+  * QAP pre degree: 2068650
+  * QAP degree: 2097152
+  * QAP number of input variables: 9
+  (enter) Compute query densities            	[             ]	(1501478040.8408s x0.00 from start)
+  (leave) Compute query densities            	[0.0212s x1.00]	(1501478040.8620s x0.00 from start)
+  Choosing window size 20 for 11258419 elements
+  Choosing window size 17 for 1141154 elements
+  * G1 window: 20
+  * G2 window: 17
+  (enter) Generating G1 multiexp table       	[             ]	(1501478041.3815s x0.00 from start)
+  (leave) Generating G1 multiexp table       	[15.7979s x1.00]	(1501478057.1795s x0.00 from start)
+  (enter) Generating G2 multiexp table       	[             ]	(1501478057.1795s x0.00 from start)
+  (leave) Generating G2 multiexp table       	[11.6381s x1.00]	(1501478068.8176s x0.00 from start)
+  (enter) Generate R1CS proving key          	[             ]	(1501478068.8176s x0.00 from start)
+    (enter) Generate knowledge commitments     	[             ]	(1501478068.8176s x0.00 from start)
+      (enter) Compute the A-query                	[             ]	(1501478068.8176s x0.00 from start)
+      Non-zero coordinate count: 1379738/1887092 (73.11%)
+      (leave) Compute the A-query                	[51.1400s x1.00]	(1501478119.9576s x0.00 from start)
+      (enter) Compute the B-query                	[             ]	(1501478119.9577s x0.00 from start)
+      Non-zero coordinate count: 1141155/1887092 (60.47%)
+      (leave) Compute the B-query                	[126.0061s x1.00]	(1501478245.9638s x0.00 from start)
+      (enter) Compute the C-query                	[             ]	(1501478245.9639s x0.00 from start)
+      Non-zero coordinate count: 1686772/1887092 (89.38%)
+      (leave) Compute the C-query                	[63.1183s x1.00]	(1501478309.0821s x0.00 from start)
+      (enter) Compute the H-query                	[             ]	(1501478309.0822s x0.00 from start)
+      .................................................................................................................................................................................................................. DONE!
+      (leave) Compute the H-query                	[37.8145s x1.00]	(1501478346.8967s x0.00 from start)
+      (enter) Compute the K-query                	[             ]	(1501478346.8967s x0.00 from start)
+      ............................................................................................................................................................................................. DONE!
+      (leave) Compute the K-query                	[34.7582s x1.00]	(1501478381.6549s x0.00 from start)
+    (leave) Generate knowledge commitments     	[312.8373s x1.00]	(1501478381.6549s x0.00 from start)
+  (leave) Generate R1CS proving key          	[312.8373s x1.00]	(1501478381.6550s x0.00 from start)
+  (enter) Generate R1CS verification key     	[             ]	(1501478381.6550s x0.00 from start)
+    (enter) Encode IC query for R1CS verification key	[             ]	(1501478381.6713s x0.00 from start)
+      . DONE!
+    (leave) Encode IC query for R1CS verification key	[0.0010s x1.00]	(1501478381.6722s x0.00 from start)
+  (leave) Generate R1CS verification key     	[0.0173s x1.00]	(1501478381.6722s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_generator   	[348.1492s x1.00]	(1501478381.6722s x0.00 from start)
+* G1 elements in PK: 13419707
+* Non-zero G1 elements in PK: 11258422
+* G2 elements in PK: 1887092
+* Non-zero G2 elements in PK: 1141155
+* PK size in bits: 3721036065
+* G1 elements in VK: 11
+* G2 elements in VK: 5
+* VK size in bits: 6181
+(enter) Call to r1cs_ppzksnark_verifier_process_vk	[             ]	(1501478382.3123s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3124s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3129s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3129s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3134s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501478382.3134s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.06]	(1501478382.3134s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3134s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3139s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3140s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3145s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3145s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3150s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G1	[             ]	(1501478382.3150s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G1	[0.0000s x1.04]	(1501478382.3150s x0.00 from start)
+  (enter) Call to alt_bn128_ate_precompute_G2	[             ]	(1501478382.3150s x0.00 from start)
+  (leave) Call to alt_bn128_ate_precompute_G2	[0.0005s x1.00]	(1501478382.3155s x0.00 from start)
+(leave) Call to r1cs_ppzksnark_verifier_process_vk	[0.0032s x1.00]	(1501478382.3155s x0.00 from start)
