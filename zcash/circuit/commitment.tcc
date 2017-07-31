@@ -177,7 +177,7 @@ public:
         std::shared_ptr<digest_variable<FieldT>> result
 				) : gadget<FieldT>(pb) {
 			pb_variable_array<FieldT> leading_byte =
-				from_bits({1, 1, 1, 1}, ZERO);
+				from_bits({0, 0, 0, 0}, ZERO);
 
 			pkcm_intermediate_hash1.reset(new digest_variable<FieldT>(pb, 256, ""));
 			pkcm.reset(new digest_variable<FieldT>(pb,256,""));

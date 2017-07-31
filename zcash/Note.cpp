@@ -40,12 +40,11 @@ uint256 Note::cm() const {
 }
 
 uint256 Note::getPkcm(const uint252& ask) const {
-	std::vector<unsigned char> block(512);
-	block.insert(block.end(),ask.begin(),ask.end());
-	block.insert(block.end(),pkh.begin(),pkh.end());
 	uint256 output;
-	if(crypto_hash_sha256(output.begin(),&block[0],block.size()) != 0)
-		throw std::logic_error("pkcm failure");
+	CSHA256 sha256;
+	sha256.Write(ask.begin(),32);
+	sha256.Write(pkh.begin(),32);
+	sha256.Finalize(output.begin());
 	return output;
 }
 

@@ -280,6 +280,7 @@ class joinsplit_gadget : gadget<FieldT> {
 					}
 					linear_combination<FieldT> left_side = packed_addition(bh64[i]);
 					left_side = left_side + packed_addition(tlock64[i]);
+					left_side = left_side + packed_addition(ladd64[i]);
 
 					linear_combination<FieldT> right_side = packed_addition(mbh64);
 					right_side = right_side + packed_addition(radd64[i]);
