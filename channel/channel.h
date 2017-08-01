@@ -13,6 +13,9 @@ using BHeight = uint64_t;
 class uint256: public std::array<unsigned char,32> {
 public:
 	uint256(){}
+	uint256(uint64_t n){
+		*((uint64_t*)data()) = n;
+	}
 	uint256(const std::array<unsigned char,32> &data)
 		:std::array<unsigned char,32>(data){}
 	uint256(const Digest<32> &data)
@@ -37,6 +40,7 @@ class Coin {
 	uint256 apk,r,rho,pkcm;
 	BHeight tlock;
 public:
+	Coin():v(0){}
 	Coin(ValueType v, const uint256& apk, const uint256& r, const uint256& rho,
 			 const uint256& pkcm, BHeight tlock)
 		:v(v),apk(apk),r(r),rho(rho),pkcm(pkcm),tlock(tlock)
@@ -47,6 +51,12 @@ public:
 	inline const uint256& getR()const{return r;}
 	inline const uint256& getRHO()const{return rho;}
 	inline const uint256& getPKCM()const{return pkcm;}
+	inline uint256 commit() const {
+		return SHA256Digest({apk,uint256(v),r,rho,pkcm,uint256(tlock)});
+	}
+	inline uint256 serial(const uint256 &ask) const {
+		return SHA256Digest({ask,rho});
+	}
 	inline BHeight getTlock()const{return tlock;}
 };
 
@@ -86,6 +96,8 @@ class ZChannel {
 	static unsigned char CLOSE_LABEL;
 	static unsigned char REDEEM_LABEL;
 	static unsigned char REVOKE_LABEL;
+	static constexpr BHeight MTL = ((BHeight)(-1))>>1;
+	static constexpr BHeight T = 1000;
 
 	SchnorrDKG<DigestType> shareKey, closeKey;
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
@@ -98,7 +110,7 @@ class ZChannel {
 	int otherindex;
 	State state;
 
-	std::vector<ValuePair> v;
+	std::vector<ValuePair> values;
 	std::vector<NotePair> closeNotes;
 	std::vector<Note> redeemNotes;
 	std::vector<Note> revocations;
@@ -109,8 +121,7 @@ class ZChannel {
 	}
 
 	inline unsigned char getLabelIndex(unsigned char label, int index) const {
-		if(index) return label | 0x80;
-		return label & 0x7f;
+		return (label&(0x3f)) | ((unsigned char)index)<<6;
 	}
 	inline uint256 computeASK() const {
 		return SHA256Digest(seed.data(),32,&ASK_LABEL,1);
@@ -123,24 +134,6 @@ class ZChannel {
 		if(t) return SHA256Digest(seed.data(),32,&indexlabel,1,(unsigned char*)&seq,8);
 		return SHA256Digest(seed.data(),32,&indexlabel,1,&l2,1);
 	}
-	/*
-	inline uint256 computeR(unsigned char label, int index) const {
-		unsigned char rlabel = getLabelIndex(R_LABEL,index);
-		return SHA256Digest(seed.data(),32,&rlabel,1,&label,1);
-	}
-	inline uint256 computeCloseR(uint64_t seq, int index) const {
-		unsigned char rlabel = getLabelIndex(R_LABEL,index);
-		return SHA256Digest(seed.data(),32,&rlabel,1,(unsigned char*)&seq,8);
-	}
-	inline uint256 computeRHO(unsigned char label, int index) const {
-		unsigned char rholabel = getLabelIndex(RHO_LABEL,index);
-		return SHA256Digest(seed.data(),32,&rholabel,1,&label,1);
-	}
-	inline uint256 computeCloseRHO(uint64_t seq, int index) const {
-		unsigned char rholabel = getLabelIndex(RHO_LABEL,index);
-		return SHA256Digest(seed.data(),32,&rholabel,1,(unsigned char*)&seq,8);
-	}
-	*/
 	inline const uint256& getASK() const {
 		return ask;
 	}
@@ -149,19 +142,21 @@ class ZChannel {
 	}
 	uint256 getUint256(unsigned char l1, unsigned char l2, uint64_t seq, int index, bool t);
 	uint256 getR(unsigned char label, int index);
-	uint256 getCloseR(uint64_t seq, int index);
+	uint256 getCloseR(uint64_t seq, int index1, int index2);
 	uint256 getRHO(unsigned char label, int index);
-	uint256 getCloseRHO(uint64_t seq, int index);
+	uint256 getCloseRHO(uint64_t seq, int index1, int index2);
 public:
-	ZChannel(int index):myindex(index),otherindex(1-index) {
+	ZChannel(int index):myindex(index),otherindex(1-index),useCache(false) {
 		assert(index==1 || index==0);
 	}
-	Coin getShareCoin(uint64_t seq) const;
-	Coin getFundCoin(int index) const;
-	Coin getCloseCoin(uint64_t seq, int index) const;
-	Coin getRedeemCoin(uint64_t seq, int index) const;
-	Coin getRevokeCoin(uint64_t seq, int index) const;
-	Note getNote(uint64_t seq, int index) const;
+	Coin getShareCoin();
+	Coin getFundCoin(int index);
+	Coin getCloseCoin(uint64_t seq, int index1, int index2);
+	Coin getRedeemCoin(uint64_t seq, int index);
+	Coin getRevokeCoin(uint64_t seq, int index);
+	Note getNote(uint64_t seq, int index);
+	Note getRedeem(uint64_t seq, int index1, int index2);
+	Note getRevoke(uint64_t seq, int index);
 
 };
 

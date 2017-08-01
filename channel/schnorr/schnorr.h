@@ -16,6 +16,7 @@ class Commitment {
 public:
 	Commitment(){}
 	Commitment(std::array<unsigned char,32> md): digest(md){}
+	inline const std::array<unsigned char,32>& getData()const{return digest;}
 };
 
 class SchnorrKeyPair;

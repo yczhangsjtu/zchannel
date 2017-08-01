@@ -66,6 +66,10 @@ public:
 		return sharedPubkey.verify(md,sig);
 	}
 
+	inline Commitment commit() {
+		return sharedPubkey.commit();
+	}
+
 	inline void print(int offset=0) {
 		std::cout << std::string(" ",offset) << "private key: " << std::endl;
 		keypair.print(offset+2);
@@ -149,6 +153,7 @@ public:
 	inline PubkeyOrCommitment signPubkeyForBoth(const DigestType &md){return sign(md,Spec::SEND_PUBKEY,FOR_ME|FOR_OTHER);}
 	SharedSignature receiveAux(const PubkeyOrCommitment &pubkeycommit);
 	SchnorrSignature receiveSig(const SharedSignature &sig);
+	inline Commitment commit(){return keypair.commit();}
 };
 
 #include "dkg.tcc"
