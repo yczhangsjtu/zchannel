@@ -257,7 +257,7 @@ public:
 	void establish();
 	void wait();
 	void update();
-	void close();
+	void close(bool active);
 
 };
 

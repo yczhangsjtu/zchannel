@@ -247,19 +247,28 @@ void ZChannel::waitForMessage(const std::string& label) {
 void ZChannel::wait() {
 	if(state == State::WAIT_FOR_CONFIRM_SHARE) {
 		waitForMessage("share:confirmed");
+		state = State::ESTABLISHED;
 	} else if(state == State::WAIT_FOR_CONFIRM_CLOSE) {
 		waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
 	} else if(state == State::WAIT_FOR_CONFIRM_REDEEM) {
-		waitForMessage("redeem:confirmed");
+		waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
 	} else {
 		assert(0);
 	}
 }
 
 void ZChannel::update() {
+	assert(state == State::ESTABLISHED);
+	signCloseRedeemNotes(closeNotes.size());
 }
 
-void ZChannel::close() {
+void ZChannel::close(bool active) {
+	assert(state == State::ESTABLISHED);
+	if(active) publish(closeNotes.back());
+	wait();
+	state = State::WAIT_FOR_CONFIRM_REDEEM;
+	wait();
+	state = State::UNINITIALIZED;
 }
 
 ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md, DKGType& dkg) {
