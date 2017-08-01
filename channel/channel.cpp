@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
 #include "schnorr/digest.h"
@@ -150,10 +152,18 @@ uint256 ZChannel::getCloseRHO(uint64_t seq, int index1, int index2) {
 	return getUint256(RHO_LABEL,0,seq,index1+index2<<1,true);
 }
 
-void ZChannel::init(uint16_t lport, uint16_t rport) {
+void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 	assert(state == State::UNINITIALIZED);
+	values.clear();
+	cache.clear();
+	messagePool.clear();
+	closeNotes.clear();
+	redeemNotes.clear();
+	revocations.clear();
+
 	this->lport = lport;
 	this->rport = rport;
+	values.push_back(v);
 	dkgSeq = 0;
 	fundKeys[myindex]   = SchnorrKeyPair::keygen();
 	closeKeys[myindex]  = SchnorrKeyPair::keygen();
@@ -191,16 +201,68 @@ void ZChannel::init(uint16_t lport, uint16_t rport) {
 	state = State::INITIALIZED;
 }
 
+void ZChannel::signCloseRedeemNotes(uint64_t seq) {
+	auto closeNote0 = getNote(seq,0);
+	auto closeNote1 = getNote(seq,1);
+	auto redeemNote0 = getRedeem(seq,0,0);
+	auto redeemNote1 = getRedeem(seq,1,1);
+	{
+		auto sig0 = distSigGen(closeNote0.getDigest(),shareKey);
+		auto sig1 = distSigGen(closeNote1.getDigest(),shareKey);
+		assert(closeNotes.size() == seq);
+		if(myindex == 0) {
+			closeNote0.setSignature(sig0);
+			closeNotes.push_back(closeNote0);
+		} else {
+			closeNote1.setSignature(sig1);
+			closeNotes.push_back(closeNote1);
+		}
+	}
+	{
+		auto sig0 = distSigGen(redeemNote0.getDigest(),closeKey);
+		auto sig1 = distSigGen(redeemNote1.getDigest(),closeKey);
+		assert(redeemNotes.size() == seq);
+		if(myindex == 0) {
+			redeemNote0.setSignature(sig0);
+			redeemNotes.push_back(redeemNote0);
+		} else {
+			redeemNote1.setSignature(sig1);
+			redeemNotes.push_back(redeemNote1);
+		}
+	}
+}
+
 void ZChannel::establish() {
+	assert(state == State::INITIALIZED);
+	signCloseRedeemNotes(0);
+	publish(getFundCoin(myindex));
+	publish(getShareCoin());
+
+	state = State::WAIT_FOR_CONFIRM_SHARE;
+}
+
+void ZChannel::waitForMessage(const std::string& label) {
 }
 
 void ZChannel::wait() {
+	if(state == State::WAIT_FOR_CONFIRM_SHARE) {
+		waitForMessage("share:confirmed");
+	} else if(state == State::WAIT_FOR_CONFIRM_CLOSE) {
+		waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
+	} else if(state == State::WAIT_FOR_CONFIRM_REDEEM) {
+		waitForMessage("redeem:confirmed");
+	} else {
+		assert(0);
+	}
 }
 
 void ZChannel::update() {
 }
 
 void ZChannel::close() {
+}
+
+ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md, DKGType& dkg) {
 }
 
 void ZChannel::distKeygen(DKGType& dkg) {

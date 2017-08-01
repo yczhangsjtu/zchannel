@@ -44,6 +44,12 @@ public:
 };
 
 class ValuePair: public std::array<ValueType,2> {
+public:
+	ValuePair(const std::vector<ValueType>& v) {
+		assert(v.size() == 2);
+		data()[0] = v.at(0);
+		data()[1] = v.at(1);
+	}
 };
 
 class KeypairPair: public std::array<SchnorrKeyPair,2> {
@@ -104,6 +110,7 @@ class ZChannel {
 	using DigestType = SHA256Digest;
 	using DKGType = SchnorrDKG<DigestType>;
 	using DKGSpec = DKGType::Spec;
+	using SignatureType = SchnorrSignature;
 	
 	static constexpr auto SEND_COMMIT = DKGSpec::SEND_COMMIT;
 	static constexpr auto SEND_PUBKEY = DKGSpec::SEND_PUBKEY;
@@ -118,7 +125,8 @@ class ZChannel {
 	 * 		tell each other local keys,
 	 *		distributed key gen
 	 * INITED -> establish(active): WAIT_CONF
-	 *    confirm notes
+	 * 		sign first closing notes
+	 *    confirm coins (fund coins, share coin)
 	 * WAIT_CONF -> wait(): ESTABLISH
 	 * ESTABLISH -> update(balance): ESTABLISH
 	 *    generate all needed notes
@@ -156,6 +164,7 @@ class ZChannel {
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
 
 	bool useCache;
+	uint64_t closeSeq;
 	std::unordered_map<std::string,uint256> cache;
 	std::unordered_map<std::string,Message> messagePool;
 
@@ -223,6 +232,12 @@ class ZChannel {
 	uint256 receiveUint256(const std::string& label){}
 
 	void distKeygen(DKGType& dkg);
+	SignatureType distSigGen(const DigestType& md, DKGType& dkg);
+
+	void signCloseRedeemNotes(uint64_t seq);
+	void publish(const Coin& coin){}
+	void publish(const Note& note){}
+	void waitForMessage(const std::string& label);
 
 public:
 	ZChannel(int index):myindex(index),otherindex(1-index),
@@ -238,7 +253,7 @@ public:
 	Note getRedeem(uint64_t seq, int index1, int index2);
 	Note getRevoke(uint64_t seq, int index);
 
-	void init(uint16_t lport, uint16_t rport);
+	void init(uint16_t lport, uint16_t rport, ValuePair v);
 	void establish();
 	void wait();
 	void update();
