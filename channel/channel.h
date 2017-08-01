@@ -85,7 +85,7 @@ class ZChannel {
 	using DigestType = SHA256Digest;
 	uint256 seed, ask, apk;
 
-	enum class State { READY, WAIT_FOR_CONFIRM_SHARE,
+	enum class State { UNINITIALIZED, WAIT_FOR_CONFIRM_SHARE,
 		ESTABLISHED, WAIT_FOR_CONFIRM_CLOSE, WAIT_FOR_CONFIRM_REDEEM};
 
 	static unsigned char ASK_LABEL;
@@ -111,7 +111,7 @@ class ZChannel {
 	State state;
 
 	std::vector<ValuePair> values;
-	std::vector<NotePair> closeNotes;
+	std::vector<Note> closeNotes;
 	std::vector<Note> redeemNotes;
 	std::vector<Note> revocations;
 
@@ -146,7 +146,8 @@ class ZChannel {
 	uint256 getRHO(unsigned char label, int index);
 	uint256 getCloseRHO(uint64_t seq, int index1, int index2);
 public:
-	ZChannel(int index):myindex(index),otherindex(1-index),useCache(false) {
+	ZChannel(int index):myindex(index),otherindex(1-index),
+		useCache(false),state(State::UNINITIALIZED) {
 		assert(index==1 || index==0);
 	}
 	Coin getShareCoin();

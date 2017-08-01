@@ -86,6 +86,8 @@ Coin ZChannel::getRevokeCoin(uint64_t seq, int index) {
 
 Note ZChannel::getNote(uint64_t seq, int index) {
 	assert(index == 0 || index == 1);
+	if(index == myindex && seq < closeNotes.size())
+		return closeNotes.at(seq);
 	Coin share = getShareCoin();
 	Coin dummy = Coin();
 	Coin c1 = getCloseCoin(seq,index,0);
@@ -96,6 +98,8 @@ Note ZChannel::getNote(uint64_t seq, int index) {
 Note ZChannel::getRedeem(uint64_t seq, int index1, int index2) {
 	assert(index1 == 0 || index1 == 1);
 	assert(index2 == 0 || index2 == 1);
+	if(index1 == myindex && seq < redeemNotes.size())
+		return redeemNotes.at(seq);
 	Coin c1 = getCloseCoin(seq,index1,index2);
 	Coin dummy1 = Coin();
 	Coin r1 = getRedeemCoin(seq,index1);
@@ -105,6 +109,8 @@ Note ZChannel::getRedeem(uint64_t seq, int index1, int index2) {
 
 Note ZChannel::getRevoke(uint64_t seq, int index) {
 	assert(index == 0 || index == 1);
+	if(index == myindex && seq < revocations.size())
+		return revocations.at(seq);
 	Coin c1 = getCloseCoin(seq,1-index,1-index);
 	Coin dummy1 = Coin();
 	Coin r1 = getRevokeCoin(seq,index);
@@ -113,6 +119,7 @@ Note ZChannel::getRevoke(uint64_t seq, int index) {
 }
 
 uint256 ZChannel::getUint256(unsigned char l1, unsigned char l2, uint64_t seq, int index, bool t) {
+	assert(state != State::UNINITIALIZED);
 	if(!useCache) return compute(l1,l2,seq,index,t);
 	else {
 		std::string tag = getTag(l1,l2,seq,index,t);
