@@ -21,7 +21,11 @@ class SHA256Digest: public Digest<32> {
 public:
 	SHA256Digest(){}
 	SHA256Digest(const unsigned char* msg, size_t len);
-	SHA256Digest(const unsigned char* msg1, size_t len1, const unsigned char* msg2, size_t len2);
+	SHA256Digest(const unsigned char* msg1, size_t len1,
+			         const unsigned char* msg2, size_t len2);
+	SHA256Digest(const unsigned char* msg1, size_t len1,
+							 const unsigned char* msg2, size_t len2,
+							 const unsigned char* msg3, size_t len3);
 	SHA256Digest(std::string msg):SHA256Digest((const unsigned char *)msg.c_str(),msg.size()){}
 	SHA256Digest(std::vector<std::array<unsigned char,size()>> mds);
 };
