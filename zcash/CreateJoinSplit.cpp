@@ -2,6 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <chrono>
+#include <ctime>
+
 #include "zcashutil.h"
 #include "primitives/transaction.h"
 #include "JoinSplit.hpp"
@@ -27,11 +30,12 @@ int main(int argc, char **argv)
 
     // construct a proof.
 
-    for (int i = 0; i < 15; i++) {
+    // for (int i = 0; i < 15; i++) {
 			uint256 anchor = ZCIncrementalMerkleTree().root();
 			uint256 pubKeyHash;
 			BHeight BH1=0,BH2=0,MBH=1000;
 			bool ovd1,ovd2;
+			auto verifier = ProofVerifier::Strict();
 
 			JSDescription jsdesc(*p,
 													 pubKeyHash,
@@ -43,5 +47,15 @@ int main(int argc, char **argv)
 													 {JSOutput(), JSOutput()},
 													 0,
 													 0);
-    }
+
+			std::chrono::time_point<std::chrono::system_clock> start,end;
+			std::chrono::duration<double> elapsed_seconds;
+
+			start = std::chrono::system_clock::now();
+			for(int i = 0; i < 1000; i++)
+				jsdesc.Verify(*p, verifier, pubKeyHash);
+			end = std::chrono::system_clock::now();
+			elapsed_seconds = end-start;
+			std::cout << "Elapsed time (1000 verifications): " << elapsed_seconds.count() << "s\n\n";
+    // }
 }

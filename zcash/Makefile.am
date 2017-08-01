@@ -1,4 +1,4 @@
-OPTIONS = -std=c++11 -DCURVE_ALT_BN128 -DNO_PROCPS -ggdb
+OPTIONS = -std=c++11 -DCURVE_ALT_BN128 -DNO_PROCPS -O3 # -ggdb
 ADDLIBS = -lsnark -lsodium -lsecp256k1 -lgmp -lstdc++ -lgmpxx -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lprocps
 INCLUDE = -I$(top_srcdir)/libsnark/src -I$(top_srcdir)/libsnark/depinst/include -I$(top_srcdir)/libsodium/src/libsodium/include -I$(top_srcdir)/zcash/secp256k1/include -I$(top_srcdir)/zcash -I$(top_srcdir)
 LIBPATH = -L$(top_srcdir)/libsnark -L$(top_srcdir)/libsnark/depinst/lib -L$(top_srcdir)/libsodium/src/libsodium/.libs -L$(top_srcdir)/zcash/secp256k1/.libs
