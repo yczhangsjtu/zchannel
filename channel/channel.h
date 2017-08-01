@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cassert>
+#include "openssl/rand.h"
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
 
@@ -16,12 +17,30 @@ public:
 	uint256(uint64_t n){
 		*((uint64_t*)data()) = n;
 	}
+	static constexpr uint64_t size() {return 32;}
 	uint256(const std::array<unsigned char,32> &data)
 		:std::array<unsigned char,32>(data){}
 	uint256(const Digest<32> &data)
 		:std::array<unsigned char,32>(data.getArray()){}
 	Commitment commit() const;
 	Commitment commit(const uint256 &trapdoor) const;
+
+	void randomize() {
+		RAND_bytes(data(),size());
+	}
+
+	static uint256 rand() {
+		uint256 n;
+		n.randomize();
+		return n;
+	}
+
+	uint256 &operator^=(const uint256& rh) {
+		for(size_t i = 0; i < size(); i++) {
+			data()[i] ^= rh.data()[i];
+		}
+		return *this;
+	}
 };
 
 class ValuePair: public std::array<ValueType,2> {
@@ -83,10 +102,43 @@ class NotePair: public std::array<Note,2> {
 
 class ZChannel {
 	using DigestType = SHA256Digest;
+	using DKGType = SchnorrDKG<DigestType>;
+	using DKGSpec = DKGType::Spec;
+	
+	static constexpr auto SEND_COMMIT = DKGSpec::SEND_COMMIT;
+	static constexpr auto SEND_PUBKEY = DKGSpec::SEND_PUBKEY;
+
 	uint256 seed, ask, apk;
 
-	enum class State { UNINITIALIZED, WAIT_FOR_CONFIRM_SHARE,
-		ESTABLISHED, WAIT_FOR_CONFIRM_CLOSE, WAIT_FOR_CONFIRM_REDEEM};
+	/**
+	 * UNINIT -> init(lport,rport): INITED
+	 * 		generate keys locally,
+	 * 		setup connections,
+	 * 		agrees on seed,
+	 * 		tell each other local keys,
+	 *		distributed key gen
+	 * INITED -> establish(active): WAIT_CONF
+	 *    confirm notes
+	 * WAIT_CONF -> wait(): ESTABLISH
+	 * ESTABLISH -> update(balance): ESTABLISH
+	 *    generate all needed notes
+	 *    sign closing notes for index 0
+	 *    sign closing notes for index 1
+	 *    sign redeem notes for index 0
+	 *    sign redeem notes for index 1
+	 *    sign revocation for index 0
+	 *    sign revocation for index 1
+	 * ESTABLISH -> close(): WAIT_CONF_CLOSE
+	 *    confirm notes
+	 * WAIT_CONF_CLOSE -> wait(): WAIT_CONF_REDEEM
+	 * WAIT_CONF_REDEEM -> wait(): UNINIT
+	 */
+	enum class State {
+		UNINITIALIZED,
+		INITIALIZED, WAIT_FOR_CONFIRM_SHARE, // States during establishment
+		ESTABLISHED, // Working state
+		WAIT_FOR_CONFIRM_CLOSE, // States during closure
+		WAIT_FOR_CONFIRM_REDEEM};
 
 	static unsigned char ASK_LABEL;
 	static unsigned char R_LABEL;
@@ -99,7 +151,8 @@ class ZChannel {
 	static constexpr BHeight MTL = ((BHeight)(-1))>>1;
 	static constexpr BHeight T = 1000;
 
-	SchnorrDKG<DigestType> shareKey, closeKey;
+	uint64_t dkgSeq;
+	DKGType shareKey, closeKey;
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
 
 	bool useCache;
@@ -109,6 +162,9 @@ class ZChannel {
 	int myindex;
 	int otherindex;
 	State state;
+
+	uint16_t lport;
+	uint16_t rport;
 
 	std::vector<ValuePair> values;
 	std::vector<Note> closeNotes;
@@ -124,15 +180,15 @@ class ZChannel {
 		return (label&(0x3f)) | ((unsigned char)index)<<6;
 	}
 	inline uint256 computeASK() const {
-		return SHA256Digest(seed.data(),32,&ASK_LABEL,1);
+		return DigestType(seed.data(),32,&ASK_LABEL,1);
 	}
 	inline uint256 computeAPK() const {
-		return SHA256Digest(ask.data(),32,&ASK_LABEL,1);
+		return DigestType(ask.data(),32,&ASK_LABEL,1);
 	}
 	inline uint256 compute(unsigned char l1, unsigned char l2, uint64_t seq, int index, bool t) const {
 		unsigned char indexlabel = getLabelIndex(l1,index);
-		if(t) return SHA256Digest(seed.data(),32,&indexlabel,1,(unsigned char*)&seq,8);
-		return SHA256Digest(seed.data(),32,&indexlabel,1,&l2,1);
+		if(t) return DigestType(seed.data(),32,&indexlabel,1,(unsigned char*)&seq,8);
+		return DigestType(seed.data(),32,&indexlabel,1,&l2,1);
 	}
 	inline const uint256& getASK() const {
 		return ask;
@@ -145,6 +201,29 @@ class ZChannel {
 	uint256 getCloseR(uint64_t seq, int index1, int index2);
 	uint256 getRHO(unsigned char label, int index);
 	uint256 getCloseRHO(uint64_t seq, int index1, int index2);
+
+	void sendMessage(const std::string& label, const std::string& content){}
+	std::string receiveMessage(const std::string& label){}
+
+	void sendPubkey(const std::string& label, const SchnorrKeyPair& pubkey){}
+	void sendPubkey(uint64_t seq, const SchnorrKeyPair& pubkey) {
+		sendPubkey(std::to_string(seq),pubkey);}
+	SchnorrKeyPair receivePubkey(const std::string& seq){}
+	SchnorrKeyPair receivePubkey(uint64_t seq) {
+		return receivePubkey(std::to_string(seq));}
+
+	void sendCommit(const std::string& label, const Commitment& commitment){}
+	void sendCommit(uint64_t seq, const Commitment& commitment) {
+		sendCommit(std::to_string(seq),commitment);}
+	Commitment receiveCommit(const std::string& seq){}
+	Commitment receiveCommit(uint64_t seq){
+		return receiveCommit(std::to_string(seq));}
+
+	void sendUint256(const std::string& label, const uint256& n){}
+	uint256 receiveUint256(const std::string& label){}
+
+	void distKeygen(DKGType& dkg);
+
 public:
 	ZChannel(int index):myindex(index),otherindex(1-index),
 		useCache(false),state(State::UNINITIALIZED) {
@@ -158,6 +237,12 @@ public:
 	Note getNote(uint64_t seq, int index);
 	Note getRedeem(uint64_t seq, int index1, int index2);
 	Note getRevoke(uint64_t seq, int index);
+
+	void init(uint16_t lport, uint16_t rport);
+	void establish();
+	void wait();
+	void update();
+	void close();
 
 };
 

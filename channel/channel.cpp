@@ -150,3 +150,72 @@ uint256 ZChannel::getCloseRHO(uint64_t seq, int index1, int index2) {
 	return getUint256(RHO_LABEL,0,seq,index1+index2<<1,true);
 }
 
+void ZChannel::init(uint16_t lport, uint16_t rport) {
+	assert(state == State::UNINITIALIZED);
+	this->lport = lport;
+	this->rport = rport;
+	dkgSeq = 0;
+	fundKeys[myindex]   = SchnorrKeyPair::keygen();
+	closeKeys[myindex]  = SchnorrKeyPair::keygen();
+	redeemKeys[myindex] = SchnorrKeyPair::keygen();
+	revokeKeys[myindex] = SchnorrKeyPair::keygen();
+
+	// Agrees on random seed
+	seed.randomize();
+	uint256 oseed;
+	if(myindex) {
+		sendCommit("seedcmt",seed.commit());
+		oseed = receiveUint256("seed");
+		sendUint256("seed",seed);
+	} else {
+		auto seedcommit = receiveCommit("seedcmt");
+		sendUint256("seed",seed);
+		oseed = receiveUint256("seed");
+	}
+	seed ^= oseed;
+
+	// Send each other the locally generated private keys
+	sendPubkey(dkgSeq,fundKeys[myindex]);
+	sendPubkey(dkgSeq+1,closeKeys[myindex]);
+	sendPubkey(dkgSeq+2,redeemKeys[myindex]);
+	sendPubkey(dkgSeq+3,revokeKeys[myindex]);
+	fundKeys[otherindex]   = receivePubkey(dkgSeq);
+	closeKeys[otherindex]  = receivePubkey(dkgSeq+1);
+	redeemKeys[otherindex] = receivePubkey(dkgSeq+2);
+	revokeKeys[otherindex] = receivePubkey(dkgSeq+3);
+
+	// Distributed generation of keys
+	distKeygen(shareKey);
+	distKeygen(closeKey);
+
+	state = State::INITIALIZED;
+}
+
+void ZChannel::establish() {
+}
+
+void ZChannel::wait() {
+}
+
+void ZChannel::update() {
+}
+
+void ZChannel::close() {
+}
+
+void ZChannel::distKeygen(DKGType& dkg) {
+	auto pkeycm = dkg.keyGen(myindex?SEND_COMMIT:SEND_PUBKEY);
+	SchnorrKeyPair pkey;
+	if(pkeycm.isPubkey()) {
+		auto cm = receiveCommit(dkgSeq);
+		sendPubkey(dkgSeq,pkeycm.asPubkey());
+		pkey = receivePubkey(dkgSeq);
+	} else {
+		sendCommit(dkgSeq,pkeycm.asCommit());
+		pkey = receivePubkey(dkgSeq);
+		sendPubkey(dkgSeq,pkeycm.asPubkey());
+	}
+	dkg.receive(pkey);
+
+	dkgSeq++;
+}

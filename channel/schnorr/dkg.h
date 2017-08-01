@@ -137,13 +137,17 @@ public:
 	static const int FOR_ME = 1;
 	static const int FOR_OTHER = 2;
 	SchnorrDKG():state(State::START){}
-	PubkeyOrCommitment keyGen(Spec sendWhat);
+
 	inline SchnorrKeyPair pubkey() const {return keypair.getKeypair().pubkey();}
 	inline SchnorrKeyPair sharePubkey() const {return keypair.getSharedPubkey().pubkey();}
 	inline SchnorrKeyPair auxkey() const {return auxKeypair.getKeypair().pubkey();}
+
+	PubkeyOrCommitment keyGen(Spec sendWhat);
 	inline PubkeyOrCommitment keyGenCommit(){return keyGen(Spec::SEND_COMMIT);}
 	inline PubkeyOrCommitment keyGenPubkey(){return keyGen(Spec::SEND_PUBKEY);}
+
 	void receive(const PubkeyOrCommitment &pubkeycommit);
+
 	PubkeyOrCommitment sign(const DigestType &md, Spec sendWhat, int forWho);
 	inline PubkeyOrCommitment signCommitForMe(const DigestType &md){return sign(md,Spec::SEND_COMMIT,FOR_ME);}
 	inline PubkeyOrCommitment signCommitForOther(const DigestType &md){return sign(md,Spec::SEND_COMMIT,FOR_OTHER);}
@@ -151,6 +155,7 @@ public:
 	inline PubkeyOrCommitment signPubkeyForMe(const DigestType &md){return sign(md,Spec::SEND_PUBKEY,FOR_ME);}
 	inline PubkeyOrCommitment signPubkeyForOther(const DigestType &md){return sign(md,Spec::SEND_PUBKEY,FOR_OTHER);}
 	inline PubkeyOrCommitment signPubkeyForBoth(const DigestType &md){return sign(md,Spec::SEND_PUBKEY,FOR_ME|FOR_OTHER);}
+
 	SharedSignature receiveAux(const PubkeyOrCommitment &pubkeycommit);
 	SchnorrSignature receiveSig(const SharedSignature &sig);
 	inline Commitment commit(){return keypair.commit();}
