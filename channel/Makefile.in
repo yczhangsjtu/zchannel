@@ -89,7 +89,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = testschnorr$(EXEEXT) benchschnorr$(EXEEXT) \
-	testchannel$(EXEEXT)
+	testchannel$(EXEEXT) msgsender$(EXEEXT)
 subdir = channel
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
@@ -114,6 +114,9 @@ am_benchschnorr_OBJECTS = schnorr/dkg.$(OBJEXT) \
 benchschnorr_OBJECTS = $(am_benchschnorr_OBJECTS)
 am__DEPENDENCIES_1 =
 benchschnorr_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_msgsender_OBJECTS = msgsender.$(OBJEXT)
+msgsender_OBJECTS = $(am_msgsender_OBJECTS)
+msgsender_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_testchannel_OBJECTS = test.$(OBJEXT) channel.$(OBJEXT) \
 	schnorr/digest.$(OBJEXT) schnorr/dkg.$(OBJEXT) \
 	schnorr/schnorr.$(OBJEXT)
@@ -153,10 +156,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(benchschnorr_SOURCES) $(testchannel_SOURCES) \
-	$(testschnorr_SOURCES)
-DIST_SOURCES = $(benchschnorr_SOURCES) $(testchannel_SOURCES) \
-	$(testschnorr_SOURCES)
+SOURCES = $(benchschnorr_SOURCES) $(msgsender_SOURCES) \
+	$(testchannel_SOURCES) $(testschnorr_SOURCES)
+DIST_SOURCES = $(benchschnorr_SOURCES) $(msgsender_SOURCES) \
+	$(testchannel_SOURCES) $(testschnorr_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -292,7 +295,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 OPTIONS = -std=c++11 -ggdb
-ADDLIBS = -lcrypto
+ADDLIBS = -lcrypto -lACE
 AM_CPPFLAGS = $(OPTIONS)
 testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp schnorr/digest.cpp
 testschnorr_LDADD = $(ADDLIBS)
@@ -300,6 +303,8 @@ benchschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/bench.cpp sch
 benchschnorr_LDADD = $(ADDLIBS)
 testchannel_SOURCES = test.cpp channel.cpp schnorr/digest.cpp schnorr/dkg.cpp schnorr/schnorr.cpp
 testchannel_LDADD = $(ADDLIBS)
+msgsender_SOURCES = msgsender.cpp
+msgsender_LDADD = $(ADDLIBS)
 all: all-am
 
 .SUFFIXES:
@@ -394,6 +399,10 @@ benchschnorr$(EXEEXT): $(benchschnorr_OBJECTS) $(benchschnorr_DEPENDENCIES) $(EX
 	@rm -f benchschnorr$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(benchschnorr_OBJECTS) $(benchschnorr_LDADD) $(LIBS)
 
+msgsender$(EXEEXT): $(msgsender_OBJECTS) $(msgsender_DEPENDENCIES) $(EXTRA_msgsender_DEPENDENCIES) 
+	@rm -f msgsender$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgsender_OBJECTS) $(msgsender_LDADD) $(LIBS)
+
 testchannel$(EXEEXT): $(testchannel_OBJECTS) $(testchannel_DEPENDENCIES) $(EXTRA_testchannel_DEPENDENCIES) 
 	@rm -f testchannel$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(testchannel_OBJECTS) $(testchannel_LDADD) $(LIBS)
@@ -412,6 +421,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/channel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgsender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@schnorr/$(DEPDIR)/digest.Po@am__quote@

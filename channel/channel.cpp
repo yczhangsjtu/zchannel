@@ -1,5 +1,12 @@
 #include <iostream>
+#include <sstream>
 #include <cassert>
+
+#include <ace/INET_Addr.h>
+#include <ace/SOCK_Connector.h>
+#include <ace/SOCK_Stream.h>
+#include <ace/SOCK_Acceptor.h>
+#include <ace/Log_Msg.h>
 
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
@@ -15,6 +22,8 @@ unsigned char ZChannel::SHARE_LABEL = 0x04;
 unsigned char ZChannel::CLOSE_LABEL = 0x05;
 unsigned char ZChannel::REDEEM_LABEL = 0x06;
 unsigned char ZChannel::REVOKE_LABEL = 0x07;
+
+// #define THREAD_MESSAGES
 
 Commitment uint256::commit() const {
 	SHA256Digest digest(data(),32);
@@ -193,16 +202,20 @@ void ZChannel::signCloseRedeemNotes(uint64_t seq) {
 }
 
 void ZChannel::sendMessage(const std::string& label, const std::string& content) {
+	std::cerr << "  [Sending message] " << label << std::endl;
 	std::lock_guard<std::mutex> guard(sendMessagePoolMutex);
 	sendMessagePool.push_back(Message(label,content));
 }
 
 std::string ZChannel::receiveMessage(const std::string& label) {
+	std::cerr << "  [Receiving message] " << label << std::endl;
 	while(true) {
 		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
 		auto iter = receiveMessagePool.find(label);
-		if(iter != receiveMessagePool.end())
+		if(iter != receiveMessagePool.end()) {
+			std::cerr << "  [Receiving message] " << "Received " << label << std::endl;
 			return iter->second.getContent();
+		}
 	}
 }
 
@@ -215,13 +228,13 @@ void ZChannel::waitForMessage(const std::string& label) {
 	}
 }
 
-void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
+void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v) {
 
-	std::cout << "[init] Start initializing ZChannel" << std::endl;
+	std::cerr << "[init] Start initializing ZChannel" << std::endl;
 
 	assert(state == State::UNINITIALIZED);
 
-	std::cout << "[init] Clearing everything " << std::endl;
+	std::cerr << "[init] Clearing everything " << std::endl;
 	values.clear();
 	cache.clear();
 	receiveMessagePool.clear();
@@ -231,27 +244,37 @@ void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 	dkgSeq = 0;
 	dkgSigSeq = 0;
 
-	std::cout << "[init] Cleared everything " << std::endl;
+	std::cerr << "[init] Cleared everything " << std::endl;
 
-	std::cout << "[init] Set local port to " << lport << std::endl;
+	std::cerr << "[init] Set local port to " << lport << std::endl;
 	this->lport = lport;
 
-	std::cout << "[init] Set remote port to " << rport << std::endl;
+	std::cerr << "[init] Set remote host to " << ip << std::endl;
+	this->ip = ip;
+
+	std::cerr << "[init] Set remote port to " << rport << std::endl;
 	this->rport = rport;
 
-	std::cout << "[init] Set initial balance " << v << std::endl;
+	std::cerr << "[init] Set initial balance " << v << std::endl;
 	values.push_back(v);
 
-	std::cout << "[init] Run key generation for local keys" << std::endl;
+	std::cerr << "[init] Run key generation for local keys" << std::endl;
 	fundKeys[myindex]   = SchnorrKeyPair::keygen();
 	closeKeys[myindex]  = SchnorrKeyPair::keygen();
 	redeemKeys[myindex] = SchnorrKeyPair::keygen();
 	revokeKeys[myindex] = SchnorrKeyPair::keygen();
 
-	std::cout << "[init] Start message sending thread" << std::endl;
-	std::cout << "[init] Start message receiving thread" << std::endl;
+	std::cerr << "[init] Start message sending thread" << std::endl;
+	if(sendMessageThread.joinable())
+		sendMessageThread.join();
+	sendMessageThread = std::thread([=]{sendMessageFunc();});
+	std::cerr << "[init] Start message receiving thread" << std::endl;
+	if(receiveMessageThread.joinable())
+		receiveMessageThread.join();
+	receiveMessageThread = std::thread([=]{receiveMessageFunc();});
+
 	// Agrees on random seed
-	std::cout << "[init] Negotiating seed" << std::endl;
+	std::cerr << "[init] Negotiating seed" << std::endl;
 	seed.randomize();
 	uint256 oseed;
 	if(myindex) {
@@ -264,46 +287,47 @@ void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 		oseed = receiveUint256("seed");
 	}
 	seed ^= oseed;
-	std::cout << "[init] Seed agreed on" << std::endl;
+	std::cerr << "[init] Seed agreed on" << std::endl;
 
-	std::cout << "[init] Sending local public keys" << std::endl;
+	std::cerr << "[init] Sending local public keys" << std::endl;
 	// Send each other the locally generated private keys
 	sendPubkey(dkgSeq,fundKeys[myindex]);
 	sendPubkey(dkgSeq+1,closeKeys[myindex]);
 	sendPubkey(dkgSeq+2,redeemKeys[myindex]);
 	sendPubkey(dkgSeq+3,revokeKeys[myindex]);
-	std::cout << "[init] Local public keys sent" << std::endl;
-	std::cout << "[init] Receiving remote public keys" << std::endl;
+	std::cerr << "[init] Local public keys sent" << std::endl;
+	std::cerr << "[init] Receiving remote public keys" << std::endl;
 	fundKeys[otherindex]   = receivePubkey(dkgSeq);
 	closeKeys[otherindex]  = receivePubkey(dkgSeq+1);
 	redeemKeys[otherindex] = receivePubkey(dkgSeq+2);
 	revokeKeys[otherindex] = receivePubkey(dkgSeq+3);
-	std::cout << "[init] Remote public keys received" << std::endl;
+	std::cerr << "[init] Remote public keys received" << std::endl;
 
 	// Distributed generation of keys
-	std::cout << "[init] Distributed key generation of share key" << std::endl;
+	std::cerr << "[init] Distributed key generation of share key" << std::endl;
 	distKeygen(shareKey);
-	std::cout << "[init] Distributed key generation of close key" << std::endl;
+	std::cerr << "[init] Distributed key generation of close key" << std::endl;
 	distKeygen(closeKey);
-	std::cout << "[init] Distributed key generations done" << std::endl;
-
-	std::cout << "[init] Computing share note" << std::endl;
-	shareNote.reset(new Note(getShareNote()));
-	std::cout << "[init] Signing share note" << std::endl;
-	shareNoteSigs[myindex] =
-		fundKeys[myindex].sign(DigestType(shareNote->getDigest()));
-	std::cout << "[init] Sending share note signature" << std::endl;
-	sendSignature("share",shareNoteSigs[myindex]);
-	std::cout << "[init] Receiving share note signature" << std::endl;
-	shareNoteSigs[otherindex] = receiveSignature("share");
-	std::cout << "[init] Share note signatures complete" << std::endl;
+	std::cerr << "[init] Distributed key generations done" << std::endl;
 
 	state = State::INITIALIZED;
-	std::cout << "[init] Initialization done" << std::endl;
+	std::cerr << "[init] Initialization done" << std::endl;
 }
 
 void ZChannel::establish() {
 	assert(state == State::INITIALIZED);
+
+	std::cerr << "[establish] Computing share note" << std::endl;
+	shareNote.reset(new Note(getShareNote()));
+	std::cerr << "[establish] Signing share note" << std::endl;
+	shareNoteSigs[myindex] =
+		fundKeys[myindex].sign(DigestType(shareNote->getDigest()));
+	std::cerr << "[establish] Sending share note signature" << std::endl;
+	sendSignature("share",shareNoteSigs[myindex]);
+	std::cerr << "[establish] Receiving share note signature" << std::endl;
+	shareNoteSigs[otherindex] = receiveSignature("share");
+	std::cerr << "[establish] Share note signatures complete" << std::endl;
+
 	signCloseRedeemNotes(0);
 	publish(getFundCoin(myindex));
 	publish(*shareNote);
@@ -359,14 +383,141 @@ void ZChannel::distKeygen(DKGType& dkg) {
 	SchnorrKeyPair pkey;
 	if(pkeycm.isPubkey()) {
 		auto cm = receiveCommit(dkgSeq);
-		sendPubkey(dkgSeq,pkeycm.asPubkey());
-		pkey = receivePubkey(dkgSeq);
+		dkg.receive(cm);
+		sendPubkeyShare(dkgSeq,pkeycm.asPubkey());
+		pkey = receivePubkeyShare(dkgSeq);
 	} else {
 		sendCommit(dkgSeq,pkeycm.asCommit());
-		pkey = receivePubkey(dkgSeq);
-		sendPubkey(dkgSeq,pkeycm.asPubkey());
+		pkey = receivePubkeyShare(dkgSeq);
+		sendPubkeyShare(dkgSeq,dkg.pubkey());
 	}
-	dkg.receive(pkey);
+	dkg.receive(PubkeyOrCommitment(pkey));
 
 	dkgSeq++;
 }
+
+
+/**
+ * Message: only consider [0-9][A-Z][a-z],':', '-' and ';', and ignore everything * else
+ * Format: <label>-<content>;
+ * Label: [0-9A-Za-z:]+
+ * Content: [0-9A-Fa-f]
+ */
+void ZChannel::sendMessageFunc() {
+	ACE_SOCK_Acceptor acceptor;
+	ACE_SOCK_Stream peer;
+	ACE_INET_Addr addr;
+	ACE_INET_Addr remote_addr;
+
+	if(addr.set(lport) == -1) {
+		std::cerr << "  [Send Messge Thread] Failed to set port" << std::endl;
+		return;
+	}
+	if(acceptor.open(addr) == -1) {
+		std::cerr << "  [Send Message Thread] Failed to bind to address" << std::endl;
+		return;
+	}
+#ifdef THREAD_MESSAGE
+	std::cerr << "  [Send Messge Thread] Listening to port " << lport << std::endl;
+#endif
+
+	while(true) {
+		if(acceptor.accept(peer,&remote_addr) == -1) {
+			std::cerr << "  [Send Message Thread] Failed to accept" << std::endl;
+			return;
+		}
+#ifdef THREAD_MESSAGE
+		std::cerr << "  [Send Message Thread] Accepted peer: " << remote_addr.get_host_name() << ":" << remote_addr.get_port_number() << std::endl;
+#endif
+		
+		peer.disable(ACE_NONBLOCK);
+
+		while(true) {
+			std::lock_guard<std::mutex> guard(sendMessagePoolMutex);
+			if(!sendMessagePool.empty()) {
+				for(size_t i = 0; i < sendMessagePool.size(); i++) {
+					std::string label = sendMessagePool[i].getLabel();
+					std::string content = sendMessagePool[i].getContent();
+					std::string message = label+"-"+content+";";
+					if(peer.send_n(message.c_str(),message.size()) == -1) {
+						std::cout << "  [Send Message Thread] Failed to send message!" << std::endl;
+						return;
+					}
+#ifdef THREAD_MESSAGE
+					std::cout << "  [Send Message Thread] Message sent: " << message << std::endl;
+#endif
+				}
+				sendMessagePool.clear();
+			}
+		}
+	}
+}
+
+void ZChannel::receiveMessageFunc() {
+	ACE_SOCK_Connector connector;
+	ACE_SOCK_Stream peer;
+	ACE_INET_Addr peer_addr;
+	// ACE_Time_Value timeout(60); // One minute to connect
+
+	char buf[1024]; // Enough space to receive
+	int n;
+
+	if(peer_addr.set(rport,ip.c_str()) == -1) {
+		std::cerr << "  [Receive Message Thread] Failed to set remote address" << std::endl;
+		return;
+	}
+#ifdef THREAD_MESSAGE
+	std::cerr << "  [Receive Message Thread] Trying to connect to peer: "
+		<< peer_addr.get_host_name() << ":"
+		<< peer_addr.get_port_number() << std::endl;
+#endif
+
+	while(true) {
+		if(connector.connect(peer,peer_addr) == -1) {
+			// std::cerr << "  [Receive Message Thread] Failed to connect to peer" << std::endl;
+			// ACE_ERROR((LM_ERROR,"%p\n","  [Receive Message Thread] connect()"));
+			// return;
+		} else break;
+	}
+#ifdef THREAD_MESSAGE
+	std::cerr << "  [Receive Message Thread] Connected to peer." << std::endl;
+#endif
+
+	std::ostringstream oslabel;
+	std::ostringstream oscontent;
+	bool islabel = true;
+	while((n = peer.recv(buf, sizeof buf)) > 0) {
+		for(size_t i = 0; i < n; i++) {
+			for(i = 0; i < n; i++) {
+				char c = buf[i];
+				if(islabel) {
+					if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ':')
+						oslabel << c;
+					else if(c == '-')
+						islabel = false;
+				} else {
+					if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+						oscontent << c;
+					else if(c == ';') {
+						std::string label = oslabel.str();
+						std::string content = oscontent.str();
+#ifdef THREAD_MESSAGE
+						std::cerr << "  [Receive Message Thread] Received message: " << label << " " << content << std::endl;
+#endif
+						std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
+						insertReceiveMessage(label,content);
+#ifdef THREAD_MESSAGE
+						std::cerr << "  [Receive Message Thread] Now message pool is of size: " << receiveMessagePool.size() << std::endl;
+#endif
+						oslabel.str("");
+						oslabel.clear();
+						oscontent.str("");
+						oscontent.clear();
+						islabel = true;
+					}
+				}
+			}
+		}
+	}
+}
+

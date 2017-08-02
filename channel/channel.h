@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 #include <cstdio>
+#include <thread>
 #include "openssl/rand.h"
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
@@ -200,8 +201,10 @@ class ZChannel {
 
 	std::unordered_map<std::string,Message> receiveMessagePool;
 	std::mutex receiveMessagePoolMutex;
+	std::thread receiveMessageThread;
 	std::vector<Message> sendMessagePool;
 	std::mutex sendMessagePoolMutex;
+	std::thread sendMessageThread;
 
 	int myindex;
 	int otherindex;
@@ -209,6 +212,7 @@ class ZChannel {
 
 	uint16_t lport;
 	uint16_t rport;
+	std::string ip;
 
 	std::shared_ptr<Note> shareNote;
 	SignaturePair shareNoteSigs;
@@ -259,6 +263,15 @@ class ZChannel {
 		return SchnorrKeyPair::fromHex(receiveMessage("pk:"+label));}
 	SchnorrKeyPair receivePubkey(uint64_t seq) {
 		return receivePubkey(std::to_string(seq));}
+
+	inline void sendPubkeyShare(const std::string& label, const SchnorrKeyPair& pubkey) {
+		sendMessage("pks:"+label,pubkey.toHex());}
+	inline void sendPubkeyShare(uint64_t seq, const SchnorrKeyPair& pubkey) {
+		sendPubkeyShare(std::to_string(seq),pubkey);}
+	inline SchnorrKeyPair receivePubkeyShare(const std::string& label) {
+		return SchnorrKeyPair::fromHex(receiveMessage("pks:"+label));}
+	SchnorrKeyPair receivePubkeyShare(uint64_t seq) {
+		return receivePubkeyShare(std::to_string(seq));}
 
 	void sendPubkeyAux(const std::string& label, const SchnorrKeyPair& pubkey){
 		sendMessage("pka:"+label,pubkey.toHex());}
@@ -327,13 +340,25 @@ class ZChannel {
 	Note getNote(uint64_t seq, int index);
 	Note getRedeem(uint64_t seq, int index1, int index2);
 	Note getRevoke(uint64_t seq, int index);
+
+	void sendMessageFunc();
+	void receiveMessageFunc();
+	inline void insertReceiveMessage(const std::string &label,
+			const std::string &content) {
+		receiveMessagePool.insert(std::pair<std::string,Message>(
+					label,Message(label,content)));
+	}
 public:
 	ZChannel(int index):myindex(index),otherindex(1-index),
 		useCache(false),state(State::UNINITIALIZED) {
 		assert(index==1 || index==0);
 	}
+	~ZChannel() {
+		sendMessageThread.join();
+		receiveMessageThread.join();
+	}
 
-	void init(uint16_t lport, uint16_t rport, ValuePair v);
+	void init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v);
 	void establish();
 	void update(ValuePair v);
 	void close(bool active);

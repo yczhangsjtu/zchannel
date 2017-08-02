@@ -22,7 +22,7 @@ template<size_t size>
 std::string bin2hex(const std::array<unsigned char,size> &data) {
 	char buf[size*2+1];
 	for(size_t i = 0; i < size; i++) {
-		sprintf(&buf[i],"%02x",data[i]);
+		sprintf(&buf[2*i],"%02x",data[i]);
 	}
 	buf[size*2] = '\0';
 	return std::string(buf);
