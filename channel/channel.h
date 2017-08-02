@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cassert>
+#include <mutex>
 #include "openssl/rand.h"
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
@@ -160,6 +161,7 @@ class ZChannel {
 	static constexpr BHeight T = 1000;
 
 	uint64_t dkgSeq;
+	uint64_t dkgSigSeq;
 	DKGType shareKey, closeKey;
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
 
@@ -167,6 +169,7 @@ class ZChannel {
 	uint64_t closeSeq;
 	std::unordered_map<std::string,uint256> cache;
 	std::unordered_map<std::string,Message> messagePool;
+	std::mutex messagePoolMutex;
 
 	int myindex;
 	int otherindex;
@@ -221,6 +224,13 @@ class ZChannel {
 	SchnorrKeyPair receivePubkey(uint64_t seq) {
 		return receivePubkey(std::to_string(seq));}
 
+	void sendPubkeyAux(const std::string& label, const SchnorrKeyPair& pubkey){}
+	void sendPubkeyAux(uint64_t seq, const SchnorrKeyPair& pubkey) {
+		sendPubkeyAux(std::to_string(seq),pubkey);}
+	SchnorrKeyPair receivePubkeyAux(const std::string& seq){}
+	SchnorrKeyPair receivePubkeyAux(uint64_t seq) {
+		return receivePubkeyAux(std::to_string(seq));}
+
 	void sendCommit(const std::string& label, const Commitment& commitment){}
 	void sendCommit(uint64_t seq, const Commitment& commitment) {
 		sendCommit(std::to_string(seq),commitment);}
@@ -228,11 +238,25 @@ class ZChannel {
 	Commitment receiveCommit(uint64_t seq){
 		return receiveCommit(std::to_string(seq));}
 
+	void sendCommitAux(const std::string& label, const Commitment& commitment){}
+	void sendCommitAux(uint64_t seq, const Commitment& commitment) {
+		sendCommitAux(std::to_string(seq),commitment);}
+	Commitment receiveCommitAux(const std::string& seq){}
+	Commitment receiveCommitAux(uint64_t seq){
+		return receiveCommitAux(std::to_string(seq));}
+
+	void sendSigShare(const std::string& label, const SignatureType& sig){}
+	void sendSigShare(uint64_t seq, const SignatureType& sig) {
+		sendSigShare(std::to_string(seq),sig);}
+	SignatureType receiveSigShare(const std::string& seq){}
+	SignatureType receiveSigShare(uint64_t seq){
+		return receiveSigShare(std::to_string(seq));}
+
 	void sendUint256(const std::string& label, const uint256& n){}
 	uint256 receiveUint256(const std::string& label){}
 
 	void distKeygen(DKGType& dkg);
-	SignatureType distSigGen(const DigestType& md, DKGType& dkg);
+	SignatureType distSigGen(const DigestType& md, DKGType& dkg, bool forme);
 
 	void signCloseRedeemNotes(uint64_t seq);
 	void publish(const Coin& coin){}
@@ -255,7 +279,6 @@ public:
 
 	void init(uint16_t lport, uint16_t rport, ValuePair v);
 	void establish();
-	void wait();
 	void update();
 	void close(bool active);
 

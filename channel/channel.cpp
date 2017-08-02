@@ -165,6 +165,7 @@ void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 	this->rport = rport;
 	values.push_back(v);
 	dkgSeq = 0;
+	dkgSigSeq = 0;
 	fundKeys[myindex]   = SchnorrKeyPair::keygen();
 	closeKeys[myindex]  = SchnorrKeyPair::keygen();
 	redeemKeys[myindex] = SchnorrKeyPair::keygen();
@@ -207,8 +208,8 @@ void ZChannel::signCloseRedeemNotes(uint64_t seq) {
 	auto redeemNote0 = getRedeem(seq,0,0);
 	auto redeemNote1 = getRedeem(seq,1,1);
 	{
-		auto sig0 = distSigGen(closeNote0.getDigest(),shareKey);
-		auto sig1 = distSigGen(closeNote1.getDigest(),shareKey);
+		auto sig0 = distSigGen(closeNote0.getDigest(),shareKey,myindex==0);
+		auto sig1 = distSigGen(closeNote1.getDigest(),shareKey,myindex==1);
 		assert(closeNotes.size() == seq);
 		if(myindex == 0) {
 			closeNote0.setSignature(sig0);
@@ -219,8 +220,8 @@ void ZChannel::signCloseRedeemNotes(uint64_t seq) {
 		}
 	}
 	{
-		auto sig0 = distSigGen(redeemNote0.getDigest(),closeKey);
-		auto sig1 = distSigGen(redeemNote1.getDigest(),closeKey);
+		auto sig0 = distSigGen(redeemNote0.getDigest(),closeKey,myindex==0);
+		auto sig1 = distSigGen(redeemNote1.getDigest(),closeKey,myindex==1);
 		assert(redeemNotes.size() == seq);
 		if(myindex == 0) {
 			redeemNote0.setSignature(sig0);
@@ -239,21 +240,17 @@ void ZChannel::establish() {
 	publish(getShareCoin());
 
 	state = State::WAIT_FOR_CONFIRM_SHARE;
+
+	waitForMessage("share:confirmed");
+	state = State::ESTABLISHED;
 }
 
 void ZChannel::waitForMessage(const std::string& label) {
-}
-
-void ZChannel::wait() {
-	if(state == State::WAIT_FOR_CONFIRM_SHARE) {
-		waitForMessage("share:confirmed");
-		state = State::ESTABLISHED;
-	} else if(state == State::WAIT_FOR_CONFIRM_CLOSE) {
-		waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
-	} else if(state == State::WAIT_FOR_CONFIRM_REDEEM) {
-		waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
-	} else {
-		assert(0);
+	while(true) {
+		std::lock_guard<std::mutex> guard(messagePoolMutex);
+		auto iter = messagePool.find(label);
+		if(iter != messagePool.end())
+			break;
 	}
 }
 
@@ -265,13 +262,35 @@ void ZChannel::update() {
 void ZChannel::close(bool active) {
 	assert(state == State::ESTABLISHED);
 	if(active) publish(closeNotes.back());
-	wait();
+	waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
 	state = State::WAIT_FOR_CONFIRM_REDEEM;
-	wait();
+	waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
 	state = State::UNINITIALIZED;
 }
 
-ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md, DKGType& dkg) {
+ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md,
+		DKGType& dkg, bool forme) {
+	if(forme) {
+		auto aux = dkg.signPubkeyForMe(md);
+		auto cm = receiveCommitAux(dkgSigSeq);
+		dkg.receiveAux(cm);
+		sendPubkey(dkgSigSeq,aux.asPubkey());
+		auto oaux = receivePubkeyAux(dkgSigSeq);
+		dkg.receiveAux(oaux);
+		auto ssig = receiveSigShare(dkgSigSeq);
+		auto sig = dkg.receiveSig(ssig);
+		dkgSigSeq++;
+		return sig;
+	} else {
+		auto aux = dkg.signPubkeyForOther(md);
+		sendCommitAux(dkgSigSeq,aux.asCommit());
+		auto oaux = receivePubkey(dkgSigSeq);
+		sendPubkey(dkgSigSeq,dkg.auxkey());
+		auto ssig = dkg.receiveAux(oaux);
+		sendSigShare(dkgSigSeq,ssig.getSignature());
+		dkgSigSeq++;
+		return ZChannel::SignatureType();
+	}
 }
 
 void ZChannel::distKeygen(DKGType& dkg) {
