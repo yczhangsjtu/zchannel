@@ -27,10 +27,10 @@ SchnorrSignature& SchnorrSignature::operator=(const SchnorrSignature& sig) {
 	e = s = NULL;
 	set(&e,sig.e);
 	set(&s,sig.s);
-	if(sig.buflen > 0) {
-		buf = sig.buf;
-	}
-	buflen = sig.buflen;
+	// if(sig.buflen > 0) {
+	// 	buf = sig.buf;
+	// }
+	// buflen = sig.buflen;
 }
 
 SchnorrSignature SchnorrSignature::operator+(const SchnorrSignature& rh) const {
@@ -76,27 +76,19 @@ SchnorrKeyPair SchnorrKeyPair::keygen() {
 	return SchnorrKeyPair(a,p);
 }
 
-size_t SchnorrSignature::toBin(unsigned char *dst) {
-	unsigned char *pbuf = NULL;
-	ECDSA_SIG* sig = ECDSA_SIG_new();
+size_t SchnorrSignature::toBin(unsigned char *dst) const {
+	unsigned char *pbuf = dst;
+	ECDSA_SIG *sig = ECDSA_SIG_new();
 	sig->r = e;
 	sig->s = s;
-	buflen = i2d_ECDSA_SIG(sig,&pbuf);
-	pbuf = buf.data();
-	i2d_ECDSA_SIG(sig,&pbuf);
-	if(dst && dst != buf.data()) {
-		for(size_t i = 0; i < buflen; i++)
-			dst[i] = buf[i];
-	}
-	return buflen;
+	return i2d_ECDSA_SIG(sig,&pbuf);
 }
 
-std::string SchnorrSignature::toHex() {
-	if(!buflen) {
-		toBin(NULL);
-	}
-	char hexbuf[141];
-	for(size_t i = 0; i < buflen; i++) {
+std::string SchnorrSignature::toHex() const {
+	unsigned char buf[100];
+	char hexbuf[200];
+	size_t len = toBin(buf);
+	for(size_t i = 0; i < len; i++) {
 		sprintf(hexbuf+i*2,"%02x",buf[i]);
 	}
 	return std::string(hexbuf);
@@ -110,18 +102,10 @@ SchnorrKeyPair& SchnorrKeyPair::operator=(const SchnorrKeyPair& keypair) {
 	if(keypair.p) {
 		p = EC_POINT_new(SchnorrSignature::group);
 		EC_POINT_copy(p,keypair.p);
-		if(keypair.publen > 0) {
-			pubbuf = keypair.pubbuf;
-		}
-		publen = keypair.publen;
 	}
 	if(keypair.a) {
 		a = BN_new();
 		BN_copy(a,keypair.a);
-		if(keypair.privlen > 0) {
-			privlen = keypair.privlen;
-		}
-		privbuf = keypair.privbuf;
 	}
 }
 
@@ -155,57 +139,54 @@ SchnorrKeyPair& SchnorrKeyPair::operator+=(const SchnorrKeyPair& rh) {
 	return *this;
 }
 
-Commitment SchnorrKeyPair::commit() {
-	if(!publen) pubToBin(NULL);
+Commitment SchnorrKeyPair::commit() const {
+	unsigned char buf[100];
+	size_t len = pubToBin(buf);
 	std::array<unsigned char,32> md;
-	SHA256(pubbuf.data(),publen,md.data());
+	SHA256(buf,len,md.data());
 	return Commitment(md);
 }
 
-size_t SchnorrKeyPair::pubToBin(unsigned char *dst) {
-	if(!p) return publen = 0;
-	unsigned char *ppubbuf = pubbuf.data();
-	publen = EC_POINT_point2oct(SchnorrSignature::group,p,
+size_t SchnorrKeyPair::pubToBin(unsigned char *dst) const {
+	if(!p) return 0;
+	unsigned char *ppubbuf = dst;
+	size_t publen = EC_POINT_point2oct(SchnorrSignature::group,p,
 			POINT_CONVERSION_UNCOMPRESSED,ppubbuf,65,SchnorrSignature::ctx);
-	if(dst && dst != pubbuf.data()) {
-		for(size_t i = 0; i < publen; i++)
-			dst[i] = pubbuf[i];
-	}
 	return publen;
 }
 
-size_t SchnorrKeyPair::privToBin(unsigned char *dst) {
-	if(!a) return privlen = 0;
-	unsigned char *pprivbuf = privbuf.data();
-	privlen = BN_num_bytes(a);
-	BN_bn2bin(a,pprivbuf);
-	if(dst && dst != pubbuf.data()) {
-		for(size_t i = 0; i < privlen; i++)
-			dst[i] = privbuf[i];
-	}
+size_t SchnorrKeyPair::privToBin(unsigned char *dst) const {
+	if(!a) return 0;
+	unsigned char *pprivbuf = dst;
+	size_t privlen = BN_bn2bin(a,pprivbuf);
 	return privlen;
 }
 
-std::string SchnorrKeyPair::pubToHex() {
-	if(!p) return "";
-	if(!publen) {
-		pubToBin(NULL);
-	}
-	char hexbuf[131];
-	for(size_t i = 0; i < publen; i++) {
-		sprintf(hexbuf+i*2,"%02x",pubbuf[i]);
-	}
-	return std::string(hexbuf);
+SchnorrKeyPair SchnorrKeyPair::fromHex(const std::string &s) {
+	EC_POINT *p = EC_POINT_hex2point(group,s.c_str(),NULL,ctx);
+	if(p) {
+		SchnorrKeyPair keypair(NULL,p);
+		EC_POINT_free(p);
+		return keypair;
+	} else return SchnorrKeyPair();
 }
 
-std::string SchnorrKeyPair::privToHex() {
+std::string SchnorrKeyPair::pubToHex() const {
+	if(!p) return "";
+	char *hex = EC_POINT_point2hex(group,p,POINT_CONVERSION_UNCOMPRESSED,ctx);
+	if(hex) {
+		std::string ret(hex);
+		OPENSSL_free(hex);
+		return ret;
+	} else return "";
+}
+
+std::string SchnorrKeyPair::privToHex() const {
 	if(!a) return "";
-	if(!privlen) {
-		privToBin(NULL);
-	}
-	char hexbuf[131];
-	for(size_t i = 0; i < privlen; i++) {
-		sprintf(hexbuf+i*2,"%02x",privbuf[i]);
-	}
-	return std::string(hexbuf);
+	char *hex = BN_bn2hex(a);
+	if(hex) {
+		std::string ret(hex);
+		OPENSSL_free(hex);
+		return ret;
+	} else return "";
 }

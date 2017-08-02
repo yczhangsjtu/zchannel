@@ -11,12 +11,44 @@
 
 #include "digest.h"
 
+inline unsigned char x2c(char x) {
+	if(x>='0'&&x<='9') return x-'0';
+	if(x>='a'&&x<='f') return x-'a'+0xa;
+	if(x>='A'&&x<='F') return x-'A'+0xA;
+	assert(0);
+}
+
+template<size_t size>
+std::string bin2hex(const std::array<unsigned char,size> &data) {
+	char buf[size*2+1];
+	for(size_t i = 0; i < size; i++) {
+		sprintf(&buf[i],"%02x",data[i]);
+	}
+	buf[size*2] = '\0';
+	return std::string(buf);
+}
+
+template<size_t size>
+std::array<unsigned char,size> hex2bin(const std::string& s) {
+	assert(s.size() == size*2);
+	std::array<unsigned char,size> n;
+	for(size_t i = 0; i < size; i++)
+		n[i] = (x2c(s[2*i])<<4)|(x2c(s[2*i+1]));
+	return n;
+}
+
 class Commitment {
 	std::array<unsigned char,32> digest;
 public:
 	Commitment(){}
 	Commitment(std::array<unsigned char,32> md): digest(md){}
 	inline const std::array<unsigned char,32>& getData()const{return digest;}
+	inline std::string toHex() const {
+		return bin2hex(digest);
+	}
+	inline static Commitment fromHex(const std::string &s) {
+		return hex2bin<32>(s);
+	}
 };
 
 class SchnorrKeyPair;
@@ -24,8 +56,8 @@ class SchnorrSignature {
 	friend SchnorrKeyPair;
 
 	BIGNUM *e,*s;
-	std::array<unsigned char,70> buf;
-	size_t buflen = 0;
+	// std::array<unsigned char,70> buf;
+	// size_t buflen = 0;
 
 	static EC_GROUP *group;
 	static BIGNUM *order;
@@ -34,7 +66,7 @@ class SchnorrSignature {
 
 	void set(BIGNUM **dst, BIGNUM *bn);
 	static void initSchnorr();
-	size_t toBin(unsigned char *dst);
+	size_t toBin(unsigned char *dst) const;
 
 public:
 
@@ -53,24 +85,26 @@ public:
 		if(s) BN_free(s);
 	}
 
-	std::string toHex();
+	std::string toHex() const;
+	static SchnorrSignature fromHex(const std::string& s) {
+	}
 };
 
 class SchnorrKeyPair {
 	friend SchnorrSignature;
 	BIGNUM *a;
 	EC_POINT *p;
-	std::array<unsigned char,65> pubbuf;
-	std::array<unsigned char,32> privbuf;
-	size_t publen = 0;
-	size_t privlen = 0;
+	// std::array<unsigned char,65> pubbuf;
+	// std::array<unsigned char,32> privbuf;
+	// size_t publen = 0;
+	// size_t privlen = 0;
 
 	static std::once_flag initflag;
 	static EC_GROUP *group;
 	static BIGNUM *order;
 	static BN_CTX *ctx;
-	size_t pubToBin(unsigned char* dst);
-	size_t privToBin(unsigned char* dst);
+	size_t pubToBin(unsigned char* dst) const;
+	size_t privToBin(unsigned char* dst) const;
 public:
 	SchnorrKeyPair():a(NULL),p(NULL){}
 	SchnorrKeyPair(BIGNUM *_a,EC_POINT *_p){
@@ -134,7 +168,7 @@ public:
 		return ret;
 	}
 
-	Commitment commit();
+	Commitment commit() const;
 	
 	inline SchnorrKeyPair pubkey() {
 		return SchnorrKeyPair(NULL,p);
@@ -149,8 +183,10 @@ public:
 	SchnorrSignature signWithAux(const DigestType &md, const SchnorrKeyPair& aux) const;
 	template<typename DigestType>
 	bool verify(const DigestType &md, const SchnorrSignature &sig) const;
-	std::string pubToHex();
-	std::string privToHex();
+	std::string pubToHex() const;
+	inline std::string toHex() const {return pubToHex();}
+	std::string privToHex() const;
+	static SchnorrKeyPair fromHex(const std::string &s);
 	inline void print(int offset=0) {
 		std::cout << std::string(" ",offset) << "pub  key:" << pubToHex() << std::endl;
 		std::cout << std::string(" ",offset) << "priv key:" << privToHex() << std::endl;
