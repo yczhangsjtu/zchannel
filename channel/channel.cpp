@@ -24,6 +24,9 @@ unsigned char ZChannel::REDEEM_LABEL = 0x06;
 unsigned char ZChannel::REVOKE_LABEL = 0x07;
 
 // #define THREAD_MESSAGES
+#define INIT_MESSAGE
+#define ESTABLISH_MESSAGE
+#define CLOSE_MESSAGE
 
 Commitment uint256::commit() const {
 	SHA256Digest digest(data(),32);
@@ -203,19 +206,25 @@ void ZChannel::signCloseRedeemNotes(uint64_t seq) {
 }
 
 void ZChannel::sendMessage(const std::string& label, const std::string& content) {
+#ifdef SENDING_MESSAGE
 	std::cerr << "  [Sending message] " << label << std::endl;
+#endif
 	std::lock_guard<std::mutex> guard(sendMessagePoolMutex);
 	sendMessagePool.push_back(Message(label,content));
 }
 
 std::string ZChannel::receiveMessage(const std::string& label) {
+#ifdef RECEIVING_MESSAGE
 	std::cerr << "  [Receiving message] " << label << std::endl;
+#endif
 	while(true) {
 		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
 		auto iter = receiveMessagePool.find(label);
 		if(iter != receiveMessagePool.end()) {
 			std::string content = iter->second.getContent();
+#ifdef RECEIVING_MESSAGE
 			std::cerr << "  [Receiving message] " << "Received " << label << " " << content << std::endl;
+#endif
 			receiveMessagePool.erase(iter);
 			return content;
 		}
@@ -233,11 +242,15 @@ void ZChannel::waitForMessage(const std::string& label) {
 
 void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v) {
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Start initializing ZChannel" << std::endl;
+#endif
 
 	assert(state == State::UNINITIALIZED);
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Clearing everything " << std::endl;
+#endif
 	values.clear();
 	cache.clear();
 	receiveMessagePool.clear();
@@ -247,37 +260,55 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 	dkgSeq = 0;
 	dkgSigSeq = 0;
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Cleared everything " << std::endl;
+#endif
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Set local port to " << lport << std::endl;
+#endif
 	this->lport = lport;
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Set remote host to " << ip << std::endl;
+#endif
 	this->ip = ip;
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Set remote port to " << rport << std::endl;
+#endif
 	this->rport = rport;
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Set initial balance " << v << std::endl;
+#endif
 	values.push_back(v);
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Run key generation for local keys" << std::endl;
+#endif
 	fundKeys[myindex]   = SchnorrKeyPair::keygen();
 	closeKeys[myindex]  = SchnorrKeyPair::keygen();
 	redeemKeys[myindex] = SchnorrKeyPair::keygen();
 	revokeKeys[myindex] = SchnorrKeyPair::keygen();
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Start message sending thread" << std::endl;
+#endif
 	if(sendMessageThread.joinable())
 		sendMessageThread.join();
 	sendMessageThread = std::thread([=]{sendMessageFunc();});
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Start message receiving thread" << std::endl;
+#endif
 	if(receiveMessageThread.joinable())
 		receiveMessageThread.join();
 	receiveMessageThread = std::thread([=]{receiveMessageFunc();});
 
 	// Agrees on random seed
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Negotiating seed" << std::endl;
+#endif
 	seed.randomize();
 	uint256 oseed;
 	if(myindex) {
@@ -290,28 +321,44 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 		oseed = receiveUint256("seed");
 	}
 	seed ^= oseed;
-	std::cerr << "[init] Seed agreed on " << seed.toHex() << std::endl;
+#ifdef INIT_MESSAGE
+	std::cerr << "[init] Seed agreed on" << std::endl;
+#endif
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Sending local public keys" << std::endl;
+#endif
 	// Send each other the locally generated private keys
 	sendPubkey(dkgSeq,fundKeys[myindex]);
 	sendPubkey(dkgSeq+1,closeKeys[myindex]);
 	sendPubkey(dkgSeq+2,redeemKeys[myindex]);
 	sendPubkey(dkgSeq+3,revokeKeys[myindex]);
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Local public keys sent" << std::endl;
+#endif
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Receiving remote public keys" << std::endl;
+#endif
 	fundKeys[otherindex]   = receivePubkey(dkgSeq);
 	closeKeys[otherindex]  = receivePubkey(dkgSeq+1);
 	redeemKeys[otherindex] = receivePubkey(dkgSeq+2);
 	revokeKeys[otherindex] = receivePubkey(dkgSeq+3);
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Remote public keys received" << std::endl;
+#endif
 
 	// Distributed generation of keys
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Distributed key generation of share key" << std::endl;
+#endif
 	distKeygen(shareKey);
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Distributed key generation of close key" << std::endl;
+#endif
 	distKeygen(closeKey);
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Distributed key generations done" << std::endl;
+#endif
 
 	state = State::INITIALIZED;
 
@@ -319,60 +366,95 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 	ask = computeASK();
 	apk = computeASK();
 
+#ifdef INIT_MESSAGE
 	std::cerr << "[init] Initialization done" << std::endl;
+#endif
 }
 
 void ZChannel::establish() {
 	assert(state == State::INITIALIZED);
 
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Computing share note" << std::endl;
+#endif
 	shareNote.reset(new Note(getShareNote()));
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Signing share note" << std::endl;
+#endif
 	shareNoteSigs[myindex] =
 		fundKeys[myindex].sign(DigestType(shareNote->getDigest()));
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Sending share note signature" << std::endl;
+#endif
 	sendSignature("share",shareNoteSigs[myindex]);
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Receiving share note signature" << std::endl;
+#endif
 	shareNoteSigs[otherindex] = receiveSignature("share");
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Share note signatures complete" << std::endl;
+#endif
 
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Signing closing notes for each other" << std::endl;
+#endif
 	signCloseRedeemNotes(0);
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Publishing fund coin" << std::endl;
+#endif
 	publish("fund:confirmed",getFundCoin(myindex));
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Publishing share coin" << std::endl;
+#endif
 	publish("share:confirmed",*shareNote);
 
 	state = State::WAIT_FOR_CONFIRM_SHARE;
 
 	waitForMessage("share:confirmed");
 	state = State::ESTABLISHED;
+#ifdef ESTABLISH_MESSAGE
 	std::cerr << "[establish] Establishment done" << std::endl;
+#endif
 }
 
 void ZChannel::update(ValuePair v) {
 	assert(state == State::ESTABLISHED);
+#ifdef UPDATE_MESSAGE
 	std::cerr << "[update] Updating balance to " << v << std::endl;
+#endif
 	values.push_back(v);
-	std::cerr << "[establish] Signing closing notes for each other" << std::endl;
+#ifdef UPDATE_MESSAGE
+	std::cerr << "[update] Signing closing notes for each other" << std::endl;
+#endif
 	signCloseRedeemNotes(closeNotes.size());
+#ifdef UPDATE_MESSAGE
 	std::cerr << "[update] Update done " << v << std::endl;
+#endif
 }
-
 void ZChannel::close(bool active) {
 	assert(state == State::ESTABLISHED);
 	if(active) {
+#ifdef CLOSE_MESSAGE
 		std::cerr << "[close] Closing with balance" << values.back() << std::endl;
+#endif
+#ifdef CLOSE_MESSAGE
 		std::cerr << "[close] Publishing close transaction" << std::endl;
+#endif
 		publish("close:"+std::to_string(closeNotes.size())+":confirmed",closeNotes.back());
 		sendMessage("close:"+std::to_string(closeNotes.size())+":confirmed","");
 	}
+#ifdef CLOSE_MESSAGE
 	std::cerr << "[close] Waiting for close transaction closed" << std::endl;
+#endif
 	waitForMessage("close:"+std::to_string(closeNotes.size())+":confirmed");
+#ifdef CLOSE_MESSAGE
 	std::cerr << "[close] Publishing redeem transaction" << std::endl;
+#endif
 	publish("redeem:"+std::to_string(myindex)+":confirmed",redeemNotes.back());
 	state = State::WAIT_FOR_CONFIRM_REDEEM;
+#ifdef CLOSE_MESSAGE
 	std::cerr << "[close] Waiting for redeem transaction closed" << std::endl;
+#endif
 	waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
 	state = State::UNINITIALIZED;
 
@@ -380,11 +462,15 @@ void ZChannel::close(bool active) {
 	insertReceiveMessage("over","");
 
 	sendMessage("over","");
+#ifdef CLOSE_MESSAGE
 	std::cerr << "[close] Terminating threads" << std::endl;
+#endif
 	sendMessageThread.join();
 	receiveMessageThread.join();
 
+#ifdef CLOSE_MESSAGE
 	std::cerr << "[close] Channel closed" << std::endl;
+#endif
 }
 
 ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md,

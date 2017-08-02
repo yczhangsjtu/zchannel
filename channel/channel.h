@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 #include <cstdio>
+#include <cstdlib>
 #include <thread>
 #include "openssl/rand.h"
 #include "schnorr/schnorr.h"
@@ -66,6 +67,10 @@ public:
 	ValuePair(ValueType v1, ValueType v2) {
 		data()[0] = v1;
 		data()[1] = v2;
+	}
+	static ValuePair rand(ValueType sum) {
+		ValueType v = std::rand()%sum;
+		return ValuePair(v,sum-v);
 	}
 };
 
