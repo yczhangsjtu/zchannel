@@ -1,3 +1,4 @@
+#include <iostream>
 #include <cassert>
 
 #include "schnorr/schnorr.h"
@@ -215,25 +216,42 @@ void ZChannel::waitForMessage(const std::string& label) {
 }
 
 void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
+
+	std::cout << "[init] Start initializing ZChannel" << std::endl;
+
 	assert(state == State::UNINITIALIZED);
+
+	std::cout << "[init] Clearing everything " << std::endl;
 	values.clear();
 	cache.clear();
 	receiveMessagePool.clear();
 	closeNotes.clear();
 	redeemNotes.clear();
 	revocations.clear();
-
-	this->lport = lport;
-	this->rport = rport;
-	values.push_back(v);
 	dkgSeq = 0;
 	dkgSigSeq = 0;
+
+	std::cout << "[init] Cleared everything " << std::endl;
+
+	std::cout << "[init] Set local port to " << lport << std::endl;
+	this->lport = lport;
+
+	std::cout << "[init] Set remote port to " << rport << std::endl;
+	this->rport = rport;
+
+	std::cout << "[init] Set initial balance " << v << std::endl;
+	values.push_back(v);
+
+	std::cout << "[init] Run key generation for local keys" << std::endl;
 	fundKeys[myindex]   = SchnorrKeyPair::keygen();
 	closeKeys[myindex]  = SchnorrKeyPair::keygen();
 	redeemKeys[myindex] = SchnorrKeyPair::keygen();
 	revokeKeys[myindex] = SchnorrKeyPair::keygen();
 
+	std::cout << "[init] Start message sending thread" << std::endl;
+	std::cout << "[init] Start message receiving thread" << std::endl;
 	// Agrees on random seed
+	std::cout << "[init] Negotiating seed" << std::endl;
 	seed.randomize();
 	uint256 oseed;
 	if(myindex) {
@@ -246,28 +264,42 @@ void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 		oseed = receiveUint256("seed");
 	}
 	seed ^= oseed;
+	std::cout << "[init] Seed agreed on" << std::endl;
 
+	std::cout << "[init] Sending local public keys" << std::endl;
 	// Send each other the locally generated private keys
 	sendPubkey(dkgSeq,fundKeys[myindex]);
 	sendPubkey(dkgSeq+1,closeKeys[myindex]);
 	sendPubkey(dkgSeq+2,redeemKeys[myindex]);
 	sendPubkey(dkgSeq+3,revokeKeys[myindex]);
+	std::cout << "[init] Local public keys sent" << std::endl;
+	std::cout << "[init] Receiving remote public keys" << std::endl;
 	fundKeys[otherindex]   = receivePubkey(dkgSeq);
 	closeKeys[otherindex]  = receivePubkey(dkgSeq+1);
 	redeemKeys[otherindex] = receivePubkey(dkgSeq+2);
 	revokeKeys[otherindex] = receivePubkey(dkgSeq+3);
+	std::cout << "[init] Remote public keys received" << std::endl;
 
 	// Distributed generation of keys
+	std::cout << "[init] Distributed key generation of share key" << std::endl;
 	distKeygen(shareKey);
+	std::cout << "[init] Distributed key generation of close key" << std::endl;
 	distKeygen(closeKey);
+	std::cout << "[init] Distributed key generations done" << std::endl;
 
+	std::cout << "[init] Computing share note" << std::endl;
 	shareNote.reset(new Note(getShareNote()));
+	std::cout << "[init] Signing share note" << std::endl;
 	shareNoteSigs[myindex] =
 		fundKeys[myindex].sign(DigestType(shareNote->getDigest()));
+	std::cout << "[init] Sending share note signature" << std::endl;
 	sendSignature("share",shareNoteSigs[myindex]);
+	std::cout << "[init] Receiving share note signature" << std::endl;
 	shareNoteSigs[otherindex] = receiveSignature("share");
+	std::cout << "[init] Share note signatures complete" << std::endl;
 
 	state = State::INITIALIZED;
+	std::cout << "[init] Initialization done" << std::endl;
 }
 
 void ZChannel::establish() {
@@ -282,8 +314,9 @@ void ZChannel::establish() {
 	state = State::ESTABLISHED;
 }
 
-void ZChannel::update() {
+void ZChannel::update(ValuePair v) {
 	assert(state == State::ESTABLISHED);
+	values.push_back(v);
 	signCloseRedeemNotes(closeNotes.size());
 }
 

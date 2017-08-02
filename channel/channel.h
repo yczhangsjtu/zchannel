@@ -2,6 +2,7 @@
 #define __CHANNEL_H
 
 #include <unordered_map>
+#include <iostream>
 #include <memory>
 #include <vector>
 #include <cassert>
@@ -61,7 +62,16 @@ public:
 		data()[0] = v.at(0);
 		data()[1] = v.at(1);
 	}
+	ValuePair(ValueType v1, ValueType v2) {
+		data()[0] = v1;
+		data()[1] = v2;
+	}
 };
+
+inline std::ostream& operator<<(std::ostream& os, const ValuePair& v) {
+	os << "(" << v[0] << "," << v[1] << ")";
+	return os;
+}
 
 class KeypairPair: public std::array<SchnorrKeyPair,2> {
 };
@@ -308,11 +318,6 @@ class ZChannel {
 	void publish(const Note& note){}
 	void waitForMessage(const std::string& label);
 
-public:
-	ZChannel(int index):myindex(index),otherindex(1-index),
-		useCache(false),state(State::UNINITIALIZED) {
-		assert(index==1 || index==0);
-	}
 	Coin getShareCoin();
 	Coin getFundCoin(int index);
 	Coin getCloseCoin(uint64_t seq, int index1, int index2);
@@ -322,10 +327,15 @@ public:
 	Note getNote(uint64_t seq, int index);
 	Note getRedeem(uint64_t seq, int index1, int index2);
 	Note getRevoke(uint64_t seq, int index);
+public:
+	ZChannel(int index):myindex(index),otherindex(1-index),
+		useCache(false),state(State::UNINITIALIZED) {
+		assert(index==1 || index==0);
+	}
 
 	void init(uint16_t lport, uint16_t rport, ValuePair v);
 	void establish();
-	void update();
+	void update(ValuePair v);
 	void close(bool active);
 
 };
