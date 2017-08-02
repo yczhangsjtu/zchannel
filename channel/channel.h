@@ -2,6 +2,7 @@
 #define __CHANNEL_H
 
 #include <unordered_map>
+#include <memory>
 #include <vector>
 #include <cassert>
 #include <mutex>
@@ -66,8 +67,13 @@ class KeypairPair: public std::array<SchnorrKeyPair,2> {
 };
 
 class Message {
-	int type;
+	std::string label;
 	std::string data;
+public:
+	Message(const std::string label, const std::string content)
+		:label(label),data(content){}
+	std::string getLabel() const {return label;}
+	std::string getContent() const {return data;}
 };
 
 class Coin {
@@ -102,6 +108,9 @@ public:
 	Note(uint256 cm1,uint256 cm2,uint256 sn1,uint256 sn2)
 		:cm1(cm1),cm2(cm2),sn1(sn1),sn2(sn2)
 	{}
+	Note(const Note &note)
+		:cm1(note.cm1), cm2(note.cm2), sn1(note.sn1), sn2(note.sn2), sig(note.sig){
+	}
 	inline uint256 getDigest() {
 		return SHA256Digest({sn1,sn2,cm1,cm2});
 	}
@@ -121,6 +130,7 @@ class ZChannel {
 	using DKGType = SchnorrDKG<DigestType>;
 	using DKGSpec = DKGType::Spec;
 	using SignatureType = SchnorrSignature;
+	using SignaturePair = std::array<SignatureType,2>;
 	
 	static constexpr auto SEND_COMMIT = DKGSpec::SEND_COMMIT;
 	static constexpr auto SEND_PUBKEY = DKGSpec::SEND_PUBKEY;
@@ -177,8 +187,11 @@ class ZChannel {
 	bool useCache;
 	uint64_t closeSeq;
 	std::unordered_map<std::string,uint256> cache;
-	std::unordered_map<std::string,Message> messagePool;
-	std::mutex messagePoolMutex;
+
+	std::unordered_map<std::string,Message> receiveMessagePool;
+	std::mutex receiveMessagePoolMutex;
+	std::vector<Message> sendMessagePool;
+	std::mutex sendMessagePoolMutex;
 
 	int myindex;
 	int otherindex;
@@ -187,6 +200,8 @@ class ZChannel {
 	uint16_t lport;
 	uint16_t rport;
 
+	std::shared_ptr<Note> shareNote;
+	SignaturePair shareNoteSigs;
 	std::vector<ValuePair> values;
 	std::vector<Note> closeNotes;
 	std::vector<Note> redeemNotes;
@@ -223,56 +238,67 @@ class ZChannel {
 	uint256 getRHO(unsigned char label, int index);
 	uint256 getCloseRHO(uint64_t seq, int index1, int index2);
 
-	void sendMessage(const std::string& label, const std::string& content){}
-	std::string receiveMessage(const std::string& label){}
+	void sendMessage(const std::string& label, const std::string& content);
+	std::string receiveMessage(const std::string& label);
 
 	inline void sendPubkey(const std::string& label, const SchnorrKeyPair& pubkey) {
-		sendMessage(label,pubkey.toHex());}
+		sendMessage("pk:"+label,pubkey.toHex());}
 	inline void sendPubkey(uint64_t seq, const SchnorrKeyPair& pubkey) {
 		sendPubkey(std::to_string(seq),pubkey);}
 	inline SchnorrKeyPair receivePubkey(const std::string& label) {
-		return SchnorrKeyPair::fromHex(receiveMessage(label));}
+		return SchnorrKeyPair::fromHex(receiveMessage("pk:"+label));}
 	SchnorrKeyPair receivePubkey(uint64_t seq) {
 		return receivePubkey(std::to_string(seq));}
 
-	void sendPubkeyAux(const std::string& label, const SchnorrKeyPair& pubkey){}
+	void sendPubkeyAux(const std::string& label, const SchnorrKeyPair& pubkey){
+		sendMessage("pka:"+label,pubkey.toHex());}
 	inline void sendPubkeyAux(uint64_t seq, const SchnorrKeyPair& pubkey) {
 		sendPubkeyAux(std::to_string(seq),pubkey);}
 	SchnorrKeyPair receivePubkeyAux(const std::string& label) {
-		return SchnorrKeyPair::fromHex(receiveMessage(label));}
+		return SchnorrKeyPair::fromHex(receiveMessage("pka:"+label));}
 	SchnorrKeyPair receivePubkeyAux(uint64_t seq) {
 		return receivePubkeyAux(std::to_string(seq));}
 
 	void sendCommit(const std::string& label, const Commitment& commitment) {
-		sendMessage(label,commitment.toHex());}
+		sendMessage("cm:"+label,commitment.toHex());}
 	inline void sendCommit(uint64_t seq, const Commitment& commitment) {
 		sendCommit(std::to_string(seq),commitment);}
 	Commitment receiveCommit(const std::string& label) {
-		return Commitment::fromHex(receiveMessage(label));}
+		return Commitment::fromHex(receiveMessage("cm:"+label));}
 	inline Commitment receiveCommit(uint64_t seq){
 		return receiveCommit(std::to_string(seq));}
 
-	void sendCommitAux(const std::string& label, const Commitment& commitment){}
+	void sendCommitAux(const std::string& label, const Commitment& commitment) {
+		sendMessage("cma:"+label,commitment.toHex());}
 	void sendCommitAux(uint64_t seq, const Commitment& commitment) {
 		sendCommitAux(std::to_string(seq),commitment);}
 	Commitment receiveCommitAux(const std::string& label) {
-		return Commitment::fromHex(receiveMessage(label));}
+		return Commitment::fromHex(receiveMessage("cma:"+label));}
 	inline Commitment receiveCommitAux(uint64_t seq){
 		return receiveCommitAux(std::to_string(seq));}
 
 	void sendSigShare(const std::string& label, const SignatureType& sig) {
-		sendMessage(label,sig.toHex());}
+		sendMessage("ssig:"+label,sig.toHex());}
 	void sendSigShare(uint64_t seq, const SignatureType& sig) {
 		sendSigShare(std::to_string(seq),sig);}
 	SignatureType receiveSigShare(const std::string& label) {
-		return SignatureType::fromHex(receiveMessage(label));}
+		return SignatureType::fromHex(receiveMessage("ssig:"+label));}
 	inline SignatureType receiveSigShare(uint64_t seq){
 		return receiveSigShare(std::to_string(seq));}
 
+	void sendSignature(const std::string& label, const SignatureType& sig) {
+		sendMessage("sig:"+label,sig.toHex());}
+	void sendSignature(uint64_t seq, const SignatureType& sig) {
+		sendSignature(std::to_string(seq),sig);}
+	SignatureType receiveSignature(const std::string& label) {
+		return SignatureType::fromHex(receiveMessage("sig:"+label));}
+	inline SignatureType receiveSignature(uint64_t seq){
+		return receiveSignature(std::to_string(seq));}
+
 	void sendUint256(const std::string& label, const uint256& n) {
-		sendMessage(label,n.toHex());}
+		sendMessage("u256:"+label,n.toHex());}
 	uint256 receiveUint256(const std::string& label) {
-		return uint256::fromHex(receiveMessage(label));}
+		return uint256::fromHex(receiveMessage("u256:"+label));}
 
 	void distKeygen(DKGType& dkg);
 	SignatureType distSigGen(const DigestType& md, DKGType& dkg, bool forme);
@@ -292,6 +318,7 @@ public:
 	Coin getCloseCoin(uint64_t seq, int index1, int index2);
 	Coin getRedeemCoin(uint64_t seq, int index);
 	Coin getRevokeCoin(uint64_t seq, int index);
+	Note getShareNote();
 	Note getNote(uint64_t seq, int index);
 	Note getRedeem(uint64_t seq, int index1, int index2);
 	Note getRevoke(uint64_t seq, int index);

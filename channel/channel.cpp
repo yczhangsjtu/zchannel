@@ -86,6 +86,14 @@ Coin ZChannel::getRevokeCoin(uint64_t seq, int index) {
 	return Coin(v,apk,r,rho,pkcm,tlock);
 }
 
+Note ZChannel::getShareNote() {
+	Coin c1 = getFundCoin(0);
+	Coin c2 = getFundCoin(1);
+	Coin share = getShareCoin();
+	Coin dummy = Coin();
+	return Note(c1.serial(ask),c2.serial(ask),share.commit(),dummy.commit());
+}
+
 Note ZChannel::getNote(uint64_t seq, int index) {
 	assert(index == 0 || index == 1);
 	if(index == myindex && seq < closeNotes.size())
@@ -152,11 +160,65 @@ uint256 ZChannel::getCloseRHO(uint64_t seq, int index1, int index2) {
 	return getUint256(RHO_LABEL,0,seq,index1+index2<<1,true);
 }
 
+void ZChannel::signCloseRedeemNotes(uint64_t seq) {
+	auto closeNote0 = getNote(seq,0);
+	auto closeNote1 = getNote(seq,1);
+	auto redeemNote0 = getRedeem(seq,0,0);
+	auto redeemNote1 = getRedeem(seq,1,1);
+	{
+		auto sig0 = distSigGen(closeNote0.getDigest(),shareKey,myindex==0);
+		auto sig1 = distSigGen(closeNote1.getDigest(),shareKey,myindex==1);
+		assert(closeNotes.size() == seq);
+		if(myindex == 0) {
+			closeNote0.setSignature(sig0);
+			closeNotes.push_back(closeNote0);
+		} else {
+			closeNote1.setSignature(sig1);
+			closeNotes.push_back(closeNote1);
+		}
+	}
+	{
+		auto sig0 = distSigGen(redeemNote0.getDigest(),closeKey,myindex==0);
+		auto sig1 = distSigGen(redeemNote1.getDigest(),closeKey,myindex==1);
+		assert(redeemNotes.size() == seq);
+		if(myindex == 0) {
+			redeemNote0.setSignature(sig0);
+			redeemNotes.push_back(redeemNote0);
+		} else {
+			redeemNote1.setSignature(sig1);
+			redeemNotes.push_back(redeemNote1);
+		}
+	}
+}
+
+void ZChannel::sendMessage(const std::string& label, const std::string& content) {
+	std::lock_guard<std::mutex> guard(sendMessagePoolMutex);
+	sendMessagePool.push_back(Message(label,content));
+}
+
+std::string ZChannel::receiveMessage(const std::string& label) {
+	while(true) {
+		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
+		auto iter = receiveMessagePool.find(label);
+		if(iter != receiveMessagePool.end())
+			return iter->second.getContent();
+	}
+}
+
+void ZChannel::waitForMessage(const std::string& label) {
+	while(true) {
+		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
+		auto iter = receiveMessagePool.find(label);
+		if(iter != receiveMessagePool.end())
+			break;
+	}
+}
+
 void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 	assert(state == State::UNINITIALIZED);
 	values.clear();
 	cache.clear();
-	messagePool.clear();
+	receiveMessagePool.clear();
 	closeNotes.clear();
 	redeemNotes.clear();
 	revocations.clear();
@@ -199,59 +261,25 @@ void ZChannel::init(uint16_t lport, uint16_t rport, ValuePair v) {
 	distKeygen(shareKey);
 	distKeygen(closeKey);
 
-	state = State::INITIALIZED;
-}
+	shareNote.reset(new Note(getShareNote()));
+	shareNoteSigs[myindex] =
+		fundKeys[myindex].sign(DigestType(shareNote->getDigest()));
+	sendSignature("share",shareNoteSigs[myindex]);
+	shareNoteSigs[otherindex] = receiveSignature("share");
 
-void ZChannel::signCloseRedeemNotes(uint64_t seq) {
-	auto closeNote0 = getNote(seq,0);
-	auto closeNote1 = getNote(seq,1);
-	auto redeemNote0 = getRedeem(seq,0,0);
-	auto redeemNote1 = getRedeem(seq,1,1);
-	{
-		auto sig0 = distSigGen(closeNote0.getDigest(),shareKey,myindex==0);
-		auto sig1 = distSigGen(closeNote1.getDigest(),shareKey,myindex==1);
-		assert(closeNotes.size() == seq);
-		if(myindex == 0) {
-			closeNote0.setSignature(sig0);
-			closeNotes.push_back(closeNote0);
-		} else {
-			closeNote1.setSignature(sig1);
-			closeNotes.push_back(closeNote1);
-		}
-	}
-	{
-		auto sig0 = distSigGen(redeemNote0.getDigest(),closeKey,myindex==0);
-		auto sig1 = distSigGen(redeemNote1.getDigest(),closeKey,myindex==1);
-		assert(redeemNotes.size() == seq);
-		if(myindex == 0) {
-			redeemNote0.setSignature(sig0);
-			redeemNotes.push_back(redeemNote0);
-		} else {
-			redeemNote1.setSignature(sig1);
-			redeemNotes.push_back(redeemNote1);
-		}
-	}
+	state = State::INITIALIZED;
 }
 
 void ZChannel::establish() {
 	assert(state == State::INITIALIZED);
 	signCloseRedeemNotes(0);
 	publish(getFundCoin(myindex));
-	publish(getShareCoin());
+	publish(*shareNote);
 
 	state = State::WAIT_FOR_CONFIRM_SHARE;
 
 	waitForMessage("share:confirmed");
 	state = State::ESTABLISHED;
-}
-
-void ZChannel::waitForMessage(const std::string& label) {
-	while(true) {
-		std::lock_guard<std::mutex> guard(messagePoolMutex);
-		auto iter = messagePool.find(label);
-		if(iter != messagePool.end())
-			break;
-	}
 }
 
 void ZChannel::update() {
