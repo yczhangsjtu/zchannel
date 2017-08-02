@@ -11,32 +11,6 @@
 
 #include "digest.h"
 
-inline unsigned char x2c(char x) {
-	if(x>='0'&&x<='9') return x-'0';
-	if(x>='a'&&x<='f') return x-'a'+0xa;
-	if(x>='A'&&x<='F') return x-'A'+0xA;
-	assert(0);
-}
-
-template<size_t size>
-std::string bin2hex(const std::array<unsigned char,size> &data) {
-	char buf[size*2+1];
-	for(size_t i = 0; i < size; i++) {
-		sprintf(&buf[2*i],"%02x",data[i]);
-	}
-	buf[size*2] = '\0';
-	return std::string(buf);
-}
-
-template<size_t size>
-std::array<unsigned char,size> hex2bin(const std::string& s) {
-	assert(s.size() == size*2);
-	std::array<unsigned char,size> n;
-	for(size_t i = 0; i < size; i++)
-		n[i] = (x2c(s[2*i])<<4)|(x2c(s[2*i+1]));
-	return n;
-}
-
 class Commitment {
 	std::array<unsigned char,32> digest;
 public:
@@ -86,8 +60,7 @@ public:
 	}
 
 	std::string toHex() const;
-	static SchnorrSignature fromHex(const std::string& s) {
-	}
+	static SchnorrSignature fromHex(const std::string& s);
 };
 
 class SchnorrKeyPair {

@@ -7,5 +7,6 @@ int main(int argc, char *argv[]) {
 
 	ZChannel zc(myindex);
 	zc.init(lport,rport,"127.0.0.1",ValuePair(100,100));
+	zc.establish();
 	return 0;
 }

@@ -94,6 +94,18 @@ std::string SchnorrSignature::toHex() const {
 	return std::string(hexbuf);
 }
 
+SchnorrSignature SchnorrSignature::fromHex(const std::string& s) {
+	unsigned char buf[200];
+	hex2bin(s,buf);
+	size_t size = s.size()/2;
+	ECDSA_SIG *sig = NULL;
+	const unsigned char *pbuf = buf;
+	d2i_ECDSA_SIG(&sig,&pbuf,size);
+	SchnorrSignature ret(sig->r,sig->s);
+	ECDSA_SIG_free(sig);
+	return ret;
+}
+
 SchnorrKeyPair& SchnorrKeyPair::operator=(const SchnorrKeyPair& keypair) {
 	if(p) EC_POINT_free(p);
 	if(a) BN_free(a);

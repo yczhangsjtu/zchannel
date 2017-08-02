@@ -327,8 +327,12 @@ class ZChannel {
 	SignatureType distSigGen(const DigestType& md, DKGType& dkg, bool forme);
 
 	void signCloseRedeemNotes(uint64_t seq);
-	void publish(const Coin& coin){}
-	void publish(const Note& note){}
+	void publish(const std::string& msg, const Coin& coin) {
+		insertReceiveMessage(msg,"");
+	}
+	void publish(const std::string& msg, const Note& note) {
+		insertReceiveMessage(msg,"");
+	}
 	void waitForMessage(const std::string& label);
 
 	Coin getShareCoin();

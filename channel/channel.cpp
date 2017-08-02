@@ -112,6 +112,13 @@ Note ZChannel::getNote(uint64_t seq, int index) {
 	Coin dummy = Coin();
 	Coin c1 = getCloseCoin(seq,index,0);
 	Coin c2 = getCloseCoin(seq,index,1);
+
+	std::cerr << "Note: " << seq << ":" << index << ": ("
+		<< share.serial(ask).toHex() << ","
+		<< dummy.serial(ask).toHex() << ","
+		<< c1.commit().toHex() << ","
+		<< c2.commit().toHex() << ")" << std::endl;
+
 	return Note(share.serial(ask),dummy.serial(ask),c1.commit(),c2.commit());
 }
 
@@ -213,7 +220,7 @@ std::string ZChannel::receiveMessage(const std::string& label) {
 		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
 		auto iter = receiveMessagePool.find(label);
 		if(iter != receiveMessagePool.end()) {
-			std::cerr << "  [Receiving message] " << "Received " << label << std::endl;
+			std::cerr << "  [Receiving message] " << "Received " << label << " " << iter->second.getContent() << std::endl;
 			return iter->second.getContent();
 		}
 	}
@@ -287,7 +294,7 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 		oseed = receiveUint256("seed");
 	}
 	seed ^= oseed;
-	std::cerr << "[init] Seed agreed on" << std::endl;
+	std::cerr << "[init] Seed agreed on " << seed.toHex() << std::endl;
 
 	std::cerr << "[init] Sending local public keys" << std::endl;
 	// Send each other the locally generated private keys
@@ -311,6 +318,11 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 	std::cerr << "[init] Distributed key generations done" << std::endl;
 
 	state = State::INITIALIZED;
+
+	// Calculate keys
+	ask = computeASK();
+	apk = computeASK();
+
 	std::cerr << "[init] Initialization done" << std::endl;
 }
 
@@ -329,13 +341,16 @@ void ZChannel::establish() {
 	std::cerr << "[establish] Share note signatures complete" << std::endl;
 
 	signCloseRedeemNotes(0);
-	publish(getFundCoin(myindex));
-	publish(*shareNote);
+	std::cerr << "[establish] Publishing fund coin" << std::endl;
+	publish("fund:confirmed",getFundCoin(myindex));
+	std::cerr << "[establish] Publishing share coin" << std::endl;
+	publish("share:confirmed",*shareNote);
 
 	state = State::WAIT_FOR_CONFIRM_SHARE;
 
 	waitForMessage("share:confirmed");
 	state = State::ESTABLISHED;
+	std::cerr << "[establish] Establishment done" << std::endl;
 }
 
 void ZChannel::update(ValuePair v) {
@@ -346,8 +361,9 @@ void ZChannel::update(ValuePair v) {
 
 void ZChannel::close(bool active) {
 	assert(state == State::ESTABLISHED);
-	if(active) publish(closeNotes.back());
+	if(active) publish("close:"+std::to_string(closeSeq)+":confirmed",closeNotes.back());
 	waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
+	publish("redeem:"+std::to_string(myindex)+":confirmed",redeemNotes.back());
 	state = State::WAIT_FOR_CONFIRM_REDEEM;
 	waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
 	state = State::UNINITIALIZED;
@@ -359,7 +375,7 @@ ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md,
 		auto aux = dkg.signPubkeyForMe(md);
 		auto cm = receiveCommitAux(dkgSigSeq);
 		dkg.receiveAux(cm);
-		sendPubkey(dkgSigSeq,aux.asPubkey());
+		sendPubkeyAux(dkgSigSeq,aux.asPubkey());
 		auto oaux = receivePubkeyAux(dkgSigSeq);
 		dkg.receiveAux(oaux);
 		auto ssig = receiveSigShare(dkgSigSeq);
@@ -367,10 +383,10 @@ ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md,
 		dkgSigSeq++;
 		return sig;
 	} else {
-		auto aux = dkg.signPubkeyForOther(md);
+		auto aux = dkg.signCommitForOther(md);
 		sendCommitAux(dkgSigSeq,aux.asCommit());
-		auto oaux = receivePubkey(dkgSigSeq);
-		sendPubkey(dkgSigSeq,dkg.auxkey());
+		auto oaux = receivePubkeyAux(dkgSigSeq);
+		sendPubkeyAux(dkgSigSeq,dkg.auxkey());
 		auto ssig = dkg.receiveAux(oaux);
 		sendSigShare(dkgSigSeq,ssig.getSignature());
 		dkgSigSeq++;
