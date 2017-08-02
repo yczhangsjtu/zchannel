@@ -130,7 +130,7 @@ int main() {
 	elapsed_seconds = end-start;
 	end_time = std::chrono::system_clock::to_time_t(end);
 	std::cout << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time: " << elapsed_seconds.count() << "s\n\n";
+						<< "elapsed time (" << TIME << " times): " << elapsed_seconds.count() << "s\n\n";
 	
 	cout << "Benchmarking distributed generation of schnorr signature (for one party)" << endl;
 	start = std::chrono::system_clock::now();
