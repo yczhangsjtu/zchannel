@@ -113,12 +113,6 @@ Note ZChannel::getNote(uint64_t seq, int index) {
 	Coin c1 = getCloseCoin(seq,index,0);
 	Coin c2 = getCloseCoin(seq,index,1);
 
-	std::cerr << "Note: " << seq << ":" << index << ": ("
-		<< share.serial(ask).toHex() << ","
-		<< dummy.serial(ask).toHex() << ","
-		<< c1.commit().toHex() << ","
-		<< c2.commit().toHex() << ")" << std::endl;
-
 	return Note(share.serial(ask),dummy.serial(ask),c1.commit(),c2.commit());
 }
 
@@ -220,8 +214,10 @@ std::string ZChannel::receiveMessage(const std::string& label) {
 		std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
 		auto iter = receiveMessagePool.find(label);
 		if(iter != receiveMessagePool.end()) {
-			std::cerr << "  [Receiving message] " << "Received " << label << " " << iter->second.getContent() << std::endl;
-			return iter->second.getContent();
+			std::string content = iter->second.getContent();
+			std::cerr << "  [Receiving message] " << "Received " << label << " " << content << std::endl;
+			receiveMessagePool.erase(iter);
+			return content;
 		}
 	}
 }
@@ -340,6 +336,7 @@ void ZChannel::establish() {
 	shareNoteSigs[otherindex] = receiveSignature("share");
 	std::cerr << "[establish] Share note signatures complete" << std::endl;
 
+	std::cerr << "[establish] Signing closing notes for each other" << std::endl;
 	signCloseRedeemNotes(0);
 	std::cerr << "[establish] Publishing fund coin" << std::endl;
 	publish("fund:confirmed",getFundCoin(myindex));
@@ -355,18 +352,39 @@ void ZChannel::establish() {
 
 void ZChannel::update(ValuePair v) {
 	assert(state == State::ESTABLISHED);
+	std::cerr << "[update] Updating balance to " << v << std::endl;
 	values.push_back(v);
+	std::cerr << "[establish] Signing closing notes for each other" << std::endl;
 	signCloseRedeemNotes(closeNotes.size());
+	std::cerr << "[update] Update done " << v << std::endl;
 }
 
 void ZChannel::close(bool active) {
 	assert(state == State::ESTABLISHED);
-	if(active) publish("close:"+std::to_string(closeSeq)+":confirmed",closeNotes.back());
-	waitForMessage("close:"+std::to_string(closeSeq)+":confirmed");
+	if(active) {
+		std::cerr << "[close] Closing with balance" << values.back() << std::endl;
+		std::cerr << "[close] Publishing close transaction" << std::endl;
+		publish("close:"+std::to_string(closeNotes.size())+":confirmed",closeNotes.back());
+		sendMessage("close:"+std::to_string(closeNotes.size())+":confirmed","");
+	}
+	std::cerr << "[close] Waiting for close transaction closed" << std::endl;
+	waitForMessage("close:"+std::to_string(closeNotes.size())+":confirmed");
+	std::cerr << "[close] Publishing redeem transaction" << std::endl;
 	publish("redeem:"+std::to_string(myindex)+":confirmed",redeemNotes.back());
 	state = State::WAIT_FOR_CONFIRM_REDEEM;
+	std::cerr << "[close] Waiting for redeem transaction closed" << std::endl;
 	waitForMessage("redeem:"+std::to_string(myindex)+":confirmed");
 	state = State::UNINITIALIZED;
+
+	std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
+	insertReceiveMessage("over","");
+
+	sendMessage("over","");
+	std::cerr << "[close] Terminating threads" << std::endl;
+	sendMessageThread.join();
+	receiveMessageThread.join();
+
+	std::cerr << "[close] Channel closed" << std::endl;
 }
 
 ZChannel::SignatureType ZChannel::distSigGen(const DigestType& md,
@@ -462,6 +480,12 @@ void ZChannel::sendMessageFunc() {
 #ifdef THREAD_MESSAGE
 					std::cout << "  [Send Message Thread] Message sent: " << message << std::endl;
 #endif
+					if(label == "over") {
+#ifdef THREAD_MESSAGE
+						std::cerr << "  [Send Message Thread] Terminating thread"
+#endif
+						return;
+					}
 				}
 				sendMessagePool.clear();
 			}
@@ -520,7 +544,12 @@ void ZChannel::receiveMessageFunc() {
 #ifdef THREAD_MESSAGE
 						std::cerr << "  [Receive Message Thread] Received message: " << label << " " << content << std::endl;
 #endif
+						if(label == "over") {
+							return;
+						}
 						std::lock_guard<std::mutex> guard(receiveMessagePoolMutex);
+						if(receiveMessagePool.find("over") != receiveMessagePool.end())
+							return;
 						insertReceiveMessage(label,content);
 #ifdef THREAD_MESSAGE
 						std::cerr << "  [Receive Message Thread] Now message pool is of size: " << receiveMessagePool.size() << std::endl;

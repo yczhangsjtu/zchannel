@@ -196,7 +196,6 @@ class ZChannel {
 	KeypairPair fundKeys, closeKeys, redeemKeys, revokeKeys;
 
 	bool useCache;
-	uint64_t closeSeq;
 	std::unordered_map<std::string,uint256> cache;
 
 	std::unordered_map<std::string,Message> receiveMessagePool;
@@ -356,10 +355,6 @@ public:
 	ZChannel(int index):myindex(index),otherindex(1-index),
 		useCache(false),state(State::UNINITIALIZED) {
 		assert(index==1 || index==0);
-	}
-	~ZChannel() {
-		sendMessageThread.join();
-		receiveMessageThread.join();
 	}
 
 	void init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v);
