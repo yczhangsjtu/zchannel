@@ -158,6 +158,7 @@ AC_CHECK_FUNCS([clock_gettime gettimeofday memchr memmove memset munmap pow sqrt
 AC_CONFIG_FILES([Makefile
 								 demo/Makefile
 								 zcash/Makefile
-								 channel/Makefile])
+								 channel/Makefile
+								 simulator/Makefile])
 # AC_CONFIG_SUBDIRS([demo])
 AC_OUTPUT
