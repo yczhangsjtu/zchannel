@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 	std::cerr << "Start testing channel establish" << std::endl;
 	start = std::chrono::system_clock::now();
 	ZChannel zc(myindex);
-	zc.init(lport,rport,"127.0.0.1",ValuePair(100,100));
+	zc.init(lport,rport,"127.0.0.1",ValuePair(100,100),4);
 	zc.establish();
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end-start;
@@ -25,15 +25,15 @@ int main(int argc, char *argv[]) {
 
 	std::cerr << "Start testing updating" << std::endl;
 	std::cerr << "Going to update for " << TIME << " times" << std::endl;
-	start = std::chrono::system_clock::now();
 	for(size_t i = 0; i < TIME; i++) {
+		start = std::chrono::system_clock::now();
 		zc.update(ValuePair::rand(200));
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = end-start;
+		end_time = std::chrono::system_clock::to_time_t(end);
+		std::cout << "finished computation at " << std::ctime(&end_time)
+							<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 	}
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end-start;
-	end_time = std::chrono::system_clock::to_time_t(end);
-	std::cerr << "finished computation at " << std::ctime(&end_time)
-						<< "elapsed time (" << TIME <<" times): " << elapsed_seconds.count() << "s\n\n";
 
 	std::cerr << "Start testing channel closure" << std::endl;
 	start = std::chrono::system_clock::now();

@@ -241,7 +241,8 @@ void ZChannel::waitForMessage(const std::string& label) {
 	}
 }
 
-void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v) {
+void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v, uint64_t sleep)
+{
 
 #ifdef INIT_MESSAGE
 	std::cerr << "[init] Start initializing ZChannel" << std::endl;
@@ -260,6 +261,8 @@ void ZChannel::init(uint16_t lport, uint16_t rport, const std::string& ip, Value
 	revocations.clear();
 	dkgSeq = 0;
 	dkgSigSeq = 0;
+
+	this->sleepDuration = sleep;
 
 #ifdef INIT_MESSAGE
 	std::cerr << "[init] Cleared everything " << std::endl;
@@ -614,6 +617,8 @@ void ZChannel::receiveMessageFunc() {
 	std::ostringstream oscontent;
 	bool islabel = true;
 	while((n = peer.recv(buf, sizeof buf)) > 0) {
+		//TODO: Delay for a while
+		std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
 		for(size_t i = 0; i < n; i++) {
 			for(i = 0; i < n; i++) {
 				char c = buf[i];

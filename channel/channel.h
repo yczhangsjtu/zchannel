@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+#include <chrono>
 #include "openssl/rand.h"
 #include "schnorr/schnorr.h"
 #include "schnorr/dkg.h"
@@ -209,6 +210,7 @@ class ZChannel {
 	std::vector<Message> sendMessagePool;
 	std::mutex sendMessagePoolMutex;
 	std::thread sendMessageThread;
+	uint64_t sleepDuration;
 
 	int myindex;
 	int otherindex;
@@ -362,7 +364,7 @@ public:
 		assert(index==1 || index==0);
 	}
 
-	void init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v);
+	void init(uint16_t lport, uint16_t rport, const std::string& ip, ValuePair v, uint64_t sleep);
 	void establish();
 	void update(ValuePair v);
 	void close(bool active);
