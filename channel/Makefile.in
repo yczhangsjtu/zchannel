@@ -294,7 +294,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-OPTIONS = -std=c++11 -ggdb
+OPTIONS = -std=c++11 -O3 # -ggdb
 ADDLIBS = -lcrypto -lACE
 AM_CPPFLAGS = $(OPTIONS)
 testschnorr_SOURCES = schnorr/dkg.cpp schnorr/schnorr.cpp schnorr/test.cpp schnorr/digest.cpp

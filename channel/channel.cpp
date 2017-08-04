@@ -26,6 +26,7 @@ unsigned char ZChannel::REVOKE_LABEL = 0x07;
 // #define THREAD_MESSAGES
 #define INIT_MESSAGE
 #define ESTABLISH_MESSAGE
+// #define UPDATE_MESSAGE
 #define CLOSE_MESSAGE
 
 Commitment uint256::commit() const {

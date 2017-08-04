@@ -1,4 +1,4 @@
-OPTIONS = -std=c++11 -ggdb
+OPTIONS = -std=c++11 -O3 # -ggdb
 ADDLIBS = -lcrypto -lACE
 AM_CPPFLAGS = $(OPTIONS)
 bin_PROGRAMS = testschnorr benchschnorr testchannel msgsender
