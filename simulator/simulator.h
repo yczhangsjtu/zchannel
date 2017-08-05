@@ -1,12 +1,13 @@
 #ifndef __SIMULATOR_H
 #define __SIMULATOR_H
 
+#include <iostream>
+#include <string>
 #include <cstdint>
 #include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <set>
-#include <map>
 #include <cassert>
 
 class UserPair {
@@ -26,20 +27,32 @@ public:
 		if(user1 > rh.user1) return false;
 		return user2 < rh.user2;
 	}
+	inline std::string toString() const {
+		return std::to_string(user1)+","+std::to_string(user2);
+	}
 };
+
+inline std::ostream& operator<<(std::ostream& os, UserPair users) {
+	os << "(" << users.toString() << ")";
+	return os;
+}
 
 class Payment {
 	uint64_t index, time, confirm;
 	UserPair users;
 public:
 	Payment(uint64_t index, uint64_t time, uint64_t user1, uint64_t user2)
-		:index(index),time(time),users(user1,user2){}
+		:index(index),time(time),users(user1,user2),confirm(0){}
 	Payment(uint64_t index, uint64_t time, UserPair users)
-		:index(index),time(time),users(users){}
+		:index(index),time(time),users(users),confirm(0){}
 	inline uint64_t getIndex()const{return index;}
 	inline uint64_t getTime()const{return time;}
 	inline UserPair getUsers()const{return users;}
-	inline void setConfirm(uint64_t t){confirm=t;}
+	inline void setConfirm(uint64_t t){
+		assert(t>time);
+		confirm=t;
+	}
+	inline uint64_t getConfirm()const{return confirm;}
 };
 
 class Transaction {
@@ -55,7 +68,19 @@ public:
 	inline void setConfirm(uint64_t t){confirm=t;}
 	inline bool isShare()const{return isshare;}
 	inline bool hasPayment()const{return haspayment;}
+	inline std::string toString() const {
+		std::string ret = std::to_string(time);
+		if(haspayment) ret += ":p"+std::to_string(payment);
+		if(isshare) ret += ":s";
+		if(confirm) ret += ":c"+std::to_string(confirm);
+		return ret;
+	}
 };
+
+inline std::ostream& operator<<(std::ostream& os, Transaction transaction) {
+	os << "(" << transaction.toString() << ")";
+	return os;
+}
 
 class Block {
 	uint64_t time, from, to;
@@ -73,34 +98,48 @@ class BlockChain {
 public:
 	BlockChain():curr(0){}
 	void insertTransaction(Transaction transaction) {
+		// std::cout << "Inserting transaction " << transactions.size() << std::endl;
 		transactions.push_back(transaction);
 	}
 	void createBlock(uint64_t time, uint64_t m, uint64_t k, uint64_t s,
-			std::map<UserPair,bool>& relations, std::vector<Payment>& payments) {
+			std::set<UserPair>& channels, std::vector<Payment>& payments) {
+		std::cout << " Creating Block " << blocks.size();
 		if(curr >= transactions.size()) {
 			blocks.push_back(Block(time,curr,curr));
-			return;
+		} else {
+			uint64_t from = curr, to = transactions.size();
+			if(to-from > m) to = from+m;
+			std::cout << " Transactions from " << from << " to " << to;
+			blocks.push_back(Block(time,from,to));
+			curr = to;
 		}
-		uint64_t from = curr, to = transactions.size();
-		if(to-from > m) to = from+m;
-		blocks.push_back(Block(time,from,to));
+		std::cout << " (Total " << transactions.size() << " transactions)";
 		if(blocks.size() > k) {
 			uint64_t index = blocks.size()-k-1;
 			uint64_t from = blocks.at(index).getFrom();
 			uint64_t to = blocks.at(index).getTo();
+			uint64_t countpayment = 0, countchannel = 0;
 			for(uint64_t i = from; i < to; i++) {
 				transactions.at(i).setConfirm(time+s);
 				if(transactions.at(i).hasPayment()) {
 					payments.at(transactions.at(i).getPayment()).setConfirm(time+s);
+					countpayment++;
 				}
 				if(transactions.at(i).isShare()) {
 					UserPair userpair = payments.at(transactions.at(i).getPayment()).getUsers();
-					auto iter = relations.find(userpair);
-					assert(iter != relations.end());
-					iter->second = true;
+					auto iter = channels.find(userpair);
+					assert(iter == channels.end());
+					channels.insert(userpair);
+					countchannel++;
 				}
 			}
+			std::cout << " Confirmed " << countpayment << " payments." ;
+			std::cout << " Established " << countchannel << " channels." ;
 		}
+	}
+
+	inline uint64_t unconfirmedTransactions() const {
+		return transactions.size() - curr;
 	}
 };
 
@@ -118,7 +157,9 @@ public:
 	inline bool operator<(const Event& rh) const {
 		if(time < rh.time) return true;
 		if(time > rh.time) return false;
-		return type == Type::BLOCK && rh.type == Type::PAYMENT;
+		return (type == Type::BLOCK && rh.type == Type::PAYMENT) ||
+			(type == Type::BLOCK && rh.type == Type::TRANSACTION) ||
+			(type == Type::PAYMENT && rh.type == Type::TRANSACTION);
 	}
 	inline static Event transactionEvent(uint64_t time, uint64_t payment, bool hasPayment = true, bool isShare = false) {
 		Transaction transaction(time,payment,hasPayment,isShare);
@@ -139,7 +180,9 @@ public:
 class Simulator {
 	std::set<Event> events;
 	std::vector<Payment> payments;
-	std::map<UserPair,bool> relations;
+	std::set<UserPair> relations;
+	std::set<UserPair> channels;
+	std::set<UserPair> inwork;
 	std::vector<UserPair> rels;
 	BlockChain chain;
 	uint64_t curr;
@@ -160,39 +203,38 @@ class Simulator {
 	const uint64_t m = 1000;
 
 	inline static double randExp() {
-		return -log((double)rand()/RAND_MAX);
-	}
-
-	inline static uint64_t randUint32() {
-		return (((uint64_t)rand())<<16) |
-					 ((uint64_t)rand());
-	}
-
-	inline static uint64_t randUint64() {
-		return (((uint64_t)rand())<<48) |
-					 (((uint64_t)rand())<<32) |
-					 (((uint64_t)rand())<<16) |
-					 (((uint64_t)rand()));
+		while(true) {
+			auto a = rand();
+			if(a != RAND_MAX) return -log((double)a/RAND_MAX);
+		}
 	}
 
 	inline static bool happenWithProbability(double p) {
-		return (double)rand()/RAND_MAX < p;
+		return ((double)rand()/RAND_MAX) < p;
 	}
 
 	UserPair randomUserPairWithRelations() const {
 		assert(!rels.empty());
 
-		size_t x = ((((double)randUint32())/RAND_MAX)*rels.size())/RAND_MAX;
+		size_t x = (((double)rand())/RAND_MAX)*rels.size();
 		if(x >= rels.size()) x = rels.size() - 1;
 		return rels.at(x);
 	}
 
-	UserPair randomUserPair() const {
-		return UserPair(randUint32()%n,randUint32()%n);
+	inline UserPair randomUserPair() const {
+		uint64_t user1;
+		uint64_t user2;
+		while(true) {
+			user1 = rand()%n;
+			user2 = rand()%n;
+			if(user1 != user2) break;
+		}
+		return UserPair(user1,user2);
 	}
 
 	void insertEvent(uint64_t duration, Event::Type type) {
 		uint64_t time = curr + duration * randExp();
+		// std::cout << "Inserting event at " << time << std::endl;
 		events.insert(Event(type,time));
 	}
 
@@ -233,6 +275,8 @@ class Simulator {
 			handlePaymentEvent();
 		else if(event.getType() == Event::Type::BLOCK)
 			handleBlockEvent();
+		else if(event.getType() == Event::Type::TRANSACTION)
+			handleTransactionEvent(event.getTransaction());
 	}
 
 	void handlePaymentEvent() {
@@ -241,23 +285,24 @@ class Simulator {
 		bool hasChannel;
 		if(!rels.empty() && happenWithProbability(alpha)) {
 			userpair = randomUserPairWithRelations();
-			hasChannel = relations[userpair];
 		} else {
 			userpair = randomUserPair();
-			hasChannel = false;
 			if(relations.find(userpair) == relations.end()) {
-				relations[userpair] = false;
+				relations.insert(userpair);
 				rels.push_back(userpair);
 			}
 		}
+		hasChannel = channels.find(userpair) != channels.end();
 		if(hasChannel) {
 			insertConfirmedPayment(userpair,curr+16*d);
 		} else {
 			uint64_t index = insertPayment(userpair);
-			if(happenWithProbability(beta)) {
+			bool inWork = inwork.find(userpair) != inwork.end();
+			if((!inWork) && happenWithProbability(beta)) {
 				insertTransactionEvent(curr+p+r,0,false);
 				insertTransactionEvent(curr+p+r,0,false);
 				insertTransactionEvent(curr+2*p+r,index,true,true);
+				inwork.insert(userpair);
 			} else {
 				insertTransactionEvent(curr+p+r,index);
 			}
@@ -266,10 +311,13 @@ class Simulator {
 
 	void handleBlockEvent() {
 		insertBlockEvent();
-		chain.createBlock(curr,m,k,s,relations,payments);
+		std::cout << "[" << (double)curr/1000 << "s]";
+		chain.createBlock(curr,m,k,s,channels,payments);
+		std::cout << std::endl;
 	}
 
 	inline void handleTransactionEvent(Transaction transaction) {
+		// std::cout << "[" << (double)curr/1000 << "s] Transaction happens " << transaction << std::endl;
 		insertTransaction(transaction);
 	}
 
@@ -278,12 +326,11 @@ public:
 		:alpha(alpha), beta(beta), lambda(lambda), n(n), curr(0) {
 		if(!useDAPPlus) {
 			p = p1;
-			alpha = 0;
 		} else {
 			p = p2;
 		}
-		assert(alpha >= 0 && alpha <= 1);
-		assert(beta >= 0 && beta <= 1);
+		assert(this->alpha >= 0 && this->alpha <= 1);
+		assert(this->beta >= 0 && this->beta <= 1);
 		insertPaymentEvent();
 		insertBlockEvent();
 	}
@@ -295,8 +342,27 @@ public:
 	bool update() {
 		if(events.empty()) return false;
 		Event event = *events.begin();
+		events.erase(events.begin());
 		handleEvent(event);
-		events.erase(*events.begin());
+	}
+
+	inline uint64_t unconfirmedTransactions() const {
+		return chain.unconfirmedTransactions();
+	}
+
+	double averageConfirm() const {
+		double sum = 0;
+		uint64_t count = 0;
+		for(uint64_t i = 0; i < payments.size(); i++) {
+			const Payment &payment = payments.at(i);
+			auto t = payment.getTime();
+			auto c = payment.getConfirm();
+			if(c > t) {
+				count++;
+				sum += c-t;
+			}
+		}
+		return sum/count;
 	}
 };
 
