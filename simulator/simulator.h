@@ -11,7 +11,7 @@
 #include <cassert>
 #include <list>
 
-#define DEBUG
+// #define DEBUG
 
 class UserPair {
 	uint64_t user1, user2;
@@ -25,6 +25,8 @@ public:
 			user2 = tmp;
 		}
 	}
+	inline uint64_t getUser1() const {return user1;}
+	inline uint64_t getUser2() const {return user2;}
 	inline bool operator<(const UserPair& rh) const {
 		if(user1 < rh.user1) return true;
 		if(user1 > rh.user1) return false;
@@ -91,6 +93,7 @@ public:
 	Block(uint64_t time, uint64_t from, uint64_t to):time(time),from(from),to(to){}
 	inline uint64_t getFrom()const{return from;}
 	inline uint64_t getTo()const{return to;}
+	inline uint64_t getSize()const{return to-from;}
 	inline uint64_t getTime()const{return time;}
 };
 
@@ -109,16 +112,26 @@ public:
 	inline uint64_t unconfirmedTransactions() const {
 		return transactions.size() - curr;
 	}
+
+	inline uint64_t congest() const {
+		if(transactions.size() > curr+1000) return transactions.size()-curr-1000;
+		return 0;
+	}
+
+	inline uint64_t unfill(uint64_t m) const {
+		if(transactions.size() == curr && blocks.back().getSize() < m)
+			return m - blocks.back().getSize();
+		return 0;
+	}
 };
 
 class Event {
 public:
-	enum class Type {BLOCK, PAYMENT, TRANSACTION, RELATION};
+	enum class Type {BLOCK, PAYMENT, TRANSACTION};
 private:
 	Type type;
 	uint64_t time;
 	Transaction payload;
-	UserPair relation;
 public:
 	Event(Type type, uint64_t time):time(time),type(type){}
 	inline uint64_t getTime()const{return time;}
@@ -134,11 +147,6 @@ public:
 		event.setTransaction(transaction);
 		return event;
 	}
-	inline static Event relationEvent(uint64_t time, UserPair users) {
-		Event event(Type::RELATION,time);
-		event.relation = users;
-		return event;
-	}
 	inline void setTransaction(Transaction transaction) {
 		assert(type == Type::TRANSACTION);
 		payload = transaction;
@@ -147,20 +155,14 @@ public:
 		assert(type == Type::TRANSACTION);
 		return payload;
 	}
-	inline UserPair getRelation() const {
-		assert(type == Type::RELATION);
-		return relation;
-	}
 };
 
 class Simulator {
 	friend BlockChain;
 	std::set<Event> events;
 	std::vector<Payment> payments;
-	std::set<UserPair> relations;
 	std::set<UserPair> channels;
 	std::set<UserPair> inwork;
-	std::vector<UserPair> rels;
 
 	std::list<double> confirms;
 	double confirmSum;
@@ -169,19 +171,22 @@ class Simulator {
 	uint64_t curr;
 
 	// Parameters
-	double alpha, beta;
+	double alpha;
 	uint64_t n;
+	bool useChannel;
+	uint64_t r;
+	uint64_t s;
+	uint64_t d;
 
 	uint64_t p;
 	const uint64_t p1 = 98060;
 	const uint64_t p2 = 101220;
-	const uint64_t d = 100;
-	const uint64_t r = 1000;
-	const uint64_t s = 2750;
+
 	const uint64_t k = 6;
 	const uint64_t mu = 150000;
-	const uint64_t m = 1000;
+	const uint64_t m = 1500;
 	const uint64_t interval = 3600000;
+	const uint64_t D = 5;
 
 	inline static double randExp() {
 		while(true) {
@@ -195,11 +200,14 @@ class Simulator {
 	}
 
 	UserPair randomUserPairWithRelations() const {
-		assert(!rels.empty());
+		size_t x = rand()%(n-1);
+		size_t y = x+rand()%D+1;
+		if(y >= n) y = n-1;
+		return UserPair(x,y);
+	}
 
-		size_t x = (((double)rand())/RAND_MAX)*rels.size();
-		if(x >= rels.size()) x = rels.size() - 1;
-		return rels.at(x);
+	bool hasRelation(UserPair userpair) const {
+		return userpair.getUser2()-userpair.getUser1()<=D;
 	}
 
 	inline UserPair randomUserPair() const {
@@ -219,16 +227,11 @@ class Simulator {
 	}
 
 	inline void insertPaymentEvent() {
-		insertEvent(averageTransaction(),Event::Type::PAYMENT);
+		insertEvent(1000.0/paymentStrength,Event::Type::PAYMENT);
 	}
 
 	inline void insertBlockEvent() {
 		insertEvent(mu,Event::Type::BLOCK);
-	}
-
-	inline void insertRelationEvent(UserPair userpair) {
-		Event event = Event::relationEvent(curr+interval,userpair);
-		events.insert(event);
 	}
 
 	inline void insertTransactionEvent(uint64_t time, uint64_t payment, bool hasPayment = true, bool isShare = false) {
@@ -239,7 +242,7 @@ class Simulator {
 	inline void updateConfirm(double conf) {
 		confirms.push_back(conf);
 		confirmSum += conf;
-		while(confirms.size() > 1000000) {
+		while(confirms.size() > 900000) {
 			confirmSum -= confirms.front();
 			confirms.pop_front();
 		}
@@ -272,8 +275,6 @@ class Simulator {
 			handleBlockEvent();
 		else if(event.getType() == Event::Type::TRANSACTION)
 			handleTransactionEvent(event.getTransaction());
-		else if(event.getType() == Event::Type::RELATION)
-			handleRelationEvent(event.getRelation());
 	}
 
 	void handlePaymentEvent();
@@ -287,30 +288,28 @@ class Simulator {
 #ifdef DEBUG
 		std::cerr << std::endl;
 #endif
+		if(chain.congest()) paymentStrength -= 0.0002 * chain.congest();
+		if(chain.unfill(m)) paymentStrength += 0.0002 * chain.unfill(m);
+		if(paymentStrength < 1.0) paymentStrength = 1.0;
+		if(paymentStrength > 1000) paymentStrength = 1000;
 	}
 
 	inline void handleTransactionEvent(Transaction transaction) {
 		insertTransaction(transaction);
 	}
 
-	inline void handleRelationEvent(UserPair userpair) {
-		if(relations.find(userpair) == relations.end()) {
-			relations.insert(userpair);
-			rels.push_back(userpair);
-		}
-	}
-
 public:
-	Simulator(double alpha, double beta, uint64_t n, bool useDAPPlus)
-		:alpha(alpha), beta(beta), n(n), curr(0), confirmSum(0) {
+	double paymentStrength;
+	Simulator(double alpha, uint64_t n, uint64_t d, bool useDAPPlus)
+		:alpha(alpha), n(n), curr(0), confirmSum(0), useChannel(useDAPPlus), d(d), paymentStrength(1) {
 		if(!useDAPPlus) {
 			p = p1;
-			this->beta = 0;
 		} else {
 			p = p2;
 		}
+		this->r = 5*d;
+		this->s = 27*d;
 		assert(this->alpha >= 0 && this->alpha <= 1);
-		assert(this->beta >= 0 && this->beta <= 1);
 		insertPaymentEvent();
 		insertBlockEvent();
 	}
@@ -328,17 +327,6 @@ public:
 	inline double averageConfirm() const {
 		if(confirms.empty()) return 100000;
 		return confirmSum/confirms.size();
-	}
-
-	inline static double averageTransaction(double x) {
-		x /= 1000;
-		if(x >= 2001) return 301;
-		if(x <= 1) return 1;
-		return 1+(x-1)*0.15;
-	}
-	
-	inline double averageTransaction() const {
-		return averageTransaction(averageConfirm());
 	}
 };
 

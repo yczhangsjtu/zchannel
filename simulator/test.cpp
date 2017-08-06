@@ -2,38 +2,46 @@
 #include <fstream>
 #include "simulator.h"
 
-// #define TEST_ALPHA
+// #define TEST_ORIGINAL_DAP
+#define TEST_ALPHA
 #define TEST_ALPHA_90
 
-double test(double alpha, double beta, uint64_t n, bool useDAPP, uint64_t T, int repeat = 10) {
+double test(double alpha, uint64_t n, uint64_t d, bool useDAPP, uint64_t T, double &strength) {
 	double a = 0;
+	double b = 0;
+	int repeat = 1;
 	for(int i = 0; i < repeat; i++) {
-		Simulator simulator(alpha,beta,n,useDAPP);
+		Simulator simulator(alpha,n,d,useDAPP);
 		while(simulator.getCurrentTime() < T) {
 			simulator.update();
 		}
 		a += simulator.averageConfirm();
+		b += simulator.paymentStrength;
 	}
+	strength = b/repeat;
 	return a/repeat;
 }
 
 using namespace std;
 
 int main() {
-	constexpr uint64_t T = 160*3600000; // Eighty hours
+	constexpr uint64_t T = 72*3600000;
 	constexpr uint64_t n = 100000;
-	double conjest, conf;
+
+	srand((unsigned)time(0));
 
 	// Test original DAP scheme
 #ifdef TEST_ORIGINAL_DAP
-	{
-		cerr << "Original DAP scheme" << endl;
-		ofstream f("DAP.txt");
-			double conf = test(0,0,n,false,T);
-			f << conf << endl;
-			cout << conf << endl;
-		f.close();
+	cerr << "Original DAP scheme" << endl;
+	ofstream f("DAP.txt");
+	for(uint64_t d = 100; d <= 10000; d+=1000) {
+		double str;
+		double conf = test(0,n,d,false,T,str);
+		f << d << "\t" << conf << "\t" << str << endl;
+		cout << d << "\t" << conf << "\t" << str << endl;
+		if(d == 100) d = 0;
 	}
+	f.close();
 #endif
 
 #ifdef TEST_ALPHA
@@ -52,34 +60,15 @@ int main() {
 		ofstream f("alpha90.txt");
 #endif
 
-		for(double beta = 0; beta <= 1.0; beta += 0.1) {
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
-
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
-
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
-
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
-
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
-
-			conf = test(alpha,beta,n,true,T);
-			f << beta << '\t' << conf << endl;
-			cout << beta << '\t' << conf << endl;
+		for(uint64_t d = 100; d <= 10000; d+=1000) {
+			double str;
+			double conf = test(alpha,n,d,true,T,str);
+			f << d << "\t" << conf << "\t" << str << endl;
+			cout << d << "\t" << conf << "\t" << str << endl;
+			if(d == 100) d = 0;
 		}
-	f.close();
+		f.close();
+	}
 #endif
-
-	test(0.9,1.0,n,true,T,1);
 	return 0;
 }

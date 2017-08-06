@@ -41,7 +41,8 @@ void BlockChain::createBlock(uint64_t time, uint64_t m, uint64_t k, uint64_t s, 
 #ifdef DEBUG
 		std::cerr << " Confirmed " << countpayment << " payments." ;
 		std::cerr << " Established " << countchannel << " channels (Total " << sim.channels.size() << " channels).";
-		std::cerr << " Average confirm " << sim.averageConfirm() << " (" << sim.averageTransaction() << ")";
+		std::cerr << " Average confirm " << sim.averageConfirm();
+		std::cerr << " Current strength " << sim.paymentStrength;
 #endif
 	}
 }
@@ -50,13 +51,10 @@ void Simulator::handlePaymentEvent() {
 	insertPaymentEvent();
 	UserPair userpair;
 	bool hasChannel;
-	if(!rels.empty() && happenWithProbability(alpha)) {
+	if(happenWithProbability(alpha)) {
 		userpair = randomUserPairWithRelations();
 	} else {
 		userpair = randomUserPair();
-		if(relations.find(userpair) == relations.end()) {
-			insertRelationEvent(userpair);
-		}
 	}
 	hasChannel = channels.find(userpair) != channels.end();
 	if(hasChannel) {
@@ -64,7 +62,7 @@ void Simulator::handlePaymentEvent() {
 	} else {
 		uint64_t index = insertPayment(userpair);
 		bool inWork = inwork.find(userpair) != inwork.end();
-		if((!inWork) && happenWithProbability(beta)) {
+		if(useChannel && (!inWork) && hasRelation(userpair)) {
 			insertTransactionEvent(curr+p+r,0,false);
 			insertTransactionEvent(curr+p+r,0,false);
 			insertTransactionEvent(curr+2*p+r,index,true,true);
