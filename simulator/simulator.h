@@ -9,6 +9,9 @@
 #include <vector>
 #include <set>
 #include <cassert>
+#include <list>
+
+#define DEBUG
 
 class UserPair {
 	uint64_t user1, user2;
@@ -91,52 +94,17 @@ public:
 	inline uint64_t getTime()const{return time;}
 };
 
+class Simulator;
 class BlockChain {
 	std::vector<Block> blocks;
 	std::vector<Transaction> transactions;
 	uint64_t curr;
 public:
 	BlockChain():curr(0){}
-	void insertTransaction(Transaction transaction) {
-		// std::cout << "Inserting transaction " << transactions.size() << std::endl;
+	inline void insertTransaction(Transaction transaction) {
 		transactions.push_back(transaction);
 	}
-	void createBlock(uint64_t time, uint64_t m, uint64_t k, uint64_t s,
-			std::set<UserPair>& channels, std::vector<Payment>& payments) {
-		std::cout << " Creating Block " << blocks.size();
-		if(curr >= transactions.size()) {
-			blocks.push_back(Block(time,curr,curr));
-		} else {
-			uint64_t from = curr, to = transactions.size();
-			if(to-from > m) to = from+m;
-			std::cout << " Transactions from " << from << " to " << to;
-			blocks.push_back(Block(time,from,to));
-			curr = to;
-		}
-		std::cout << " (Total " << transactions.size() << " transactions)";
-		if(blocks.size() > k) {
-			uint64_t index = blocks.size()-k-1;
-			uint64_t from = blocks.at(index).getFrom();
-			uint64_t to = blocks.at(index).getTo();
-			uint64_t countpayment = 0, countchannel = 0;
-			for(uint64_t i = from; i < to; i++) {
-				transactions.at(i).setConfirm(time+s);
-				if(transactions.at(i).hasPayment()) {
-					payments.at(transactions.at(i).getPayment()).setConfirm(time+s);
-					countpayment++;
-				}
-				if(transactions.at(i).isShare()) {
-					UserPair userpair = payments.at(transactions.at(i).getPayment()).getUsers();
-					auto iter = channels.find(userpair);
-					assert(iter == channels.end());
-					channels.insert(userpair);
-					countchannel++;
-				}
-			}
-			std::cout << " Confirmed " << countpayment << " payments." ;
-			std::cout << " Established " << countchannel << " channels." ;
-		}
-	}
+	void createBlock(uint64_t time, uint64_t m, uint64_t k, uint64_t s, Simulator &sim);
 
 	inline uint64_t unconfirmedTransactions() const {
 		return transactions.size() - curr;
@@ -145,11 +113,12 @@ public:
 
 class Event {
 public:
-	enum class Type {BLOCK, PAYMENT, TRANSACTION};
+	enum class Type {BLOCK, PAYMENT, TRANSACTION, RELATION};
 private:
 	Type type;
 	uint64_t time;
 	Transaction payload;
+	UserPair relation;
 public:
 	Event(Type type, uint64_t time):time(time),type(type){}
 	inline uint64_t getTime()const{return time;}
@@ -157,14 +126,17 @@ public:
 	inline bool operator<(const Event& rh) const {
 		if(time < rh.time) return true;
 		if(time > rh.time) return false;
-		return (type == Type::BLOCK && rh.type == Type::PAYMENT) ||
-			(type == Type::BLOCK && rh.type == Type::TRANSACTION) ||
-			(type == Type::PAYMENT && rh.type == Type::TRANSACTION);
+		return type < rh.type;
 	}
 	inline static Event transactionEvent(uint64_t time, uint64_t payment, bool hasPayment = true, bool isShare = false) {
 		Transaction transaction(time,payment,hasPayment,isShare);
 		Event event(Type::TRANSACTION,time);
 		event.setTransaction(transaction);
+		return event;
+	}
+	inline static Event relationEvent(uint64_t time, UserPair users) {
+		Event event(Type::RELATION,time);
+		event.relation = users;
 		return event;
 	}
 	inline void setTransaction(Transaction transaction) {
@@ -175,21 +147,29 @@ public:
 		assert(type == Type::TRANSACTION);
 		return payload;
 	}
+	inline UserPair getRelation() const {
+		assert(type == Type::RELATION);
+		return relation;
+	}
 };
 
 class Simulator {
+	friend BlockChain;
 	std::set<Event> events;
 	std::vector<Payment> payments;
 	std::set<UserPair> relations;
 	std::set<UserPair> channels;
 	std::set<UserPair> inwork;
 	std::vector<UserPair> rels;
+
+	std::list<double> confirms;
+	double confirmSum;
+
 	BlockChain chain;
 	uint64_t curr;
 
 	// Parameters
 	double alpha, beta;
-	uint64_t lambda;
 	uint64_t n;
 
 	uint64_t p;
@@ -201,6 +181,7 @@ class Simulator {
 	const uint64_t k = 6;
 	const uint64_t mu = 150000;
 	const uint64_t m = 1000;
+	const uint64_t interval = 3600000;
 
 	inline static double randExp() {
 		while(true) {
@@ -232,18 +213,22 @@ class Simulator {
 		return UserPair(user1,user2);
 	}
 
-	void insertEvent(uint64_t duration, Event::Type type) {
+	inline void insertEvent(uint64_t duration, Event::Type type) {
 		uint64_t time = curr + duration * randExp();
-		// std::cout << "Inserting event at " << time << std::endl;
 		events.insert(Event(type,time));
 	}
 
 	inline void insertPaymentEvent() {
-		insertEvent(lambda,Event::Type::PAYMENT);
+		insertEvent(averageTransaction(),Event::Type::PAYMENT);
 	}
 
 	inline void insertBlockEvent() {
 		insertEvent(mu,Event::Type::BLOCK);
+	}
+
+	inline void insertRelationEvent(UserPair userpair) {
+		Event event = Event::relationEvent(curr+interval,userpair);
+		events.insert(event);
 	}
 
 	inline void insertTransactionEvent(uint64_t time, uint64_t payment, bool hasPayment = true, bool isShare = false) {
@@ -251,11 +236,21 @@ class Simulator {
 		events.insert(event);
 	}
 
+	inline void updateConfirm(double conf) {
+		confirms.push_back(conf);
+		confirmSum += conf;
+		while(confirms.size() > 100000) {
+			confirmSum -= confirms.front();
+			confirms.pop_front();
+		}
+	}
+
 	inline uint64_t insertConfirmedPayment(UserPair users, uint64_t confirm) {
 		uint64_t index = payments.size();
 		Payment payment(index,curr,users);
 		payment.setConfirm(confirm);
 		payments.push_back(payment);
+		updateConfirm(confirm-curr);
 		return index;
 	}
 
@@ -277,55 +272,40 @@ class Simulator {
 			handleBlockEvent();
 		else if(event.getType() == Event::Type::TRANSACTION)
 			handleTransactionEvent(event.getTransaction());
+		else if(event.getType() == Event::Type::RELATION)
+			handleRelationEvent(event.getRelation());
 	}
 
-	void handlePaymentEvent() {
-		insertPaymentEvent();
-		UserPair userpair;
-		bool hasChannel;
-		if(!rels.empty() && happenWithProbability(alpha)) {
-			userpair = randomUserPairWithRelations();
-		} else {
-			userpair = randomUserPair();
-			if(relations.find(userpair) == relations.end()) {
-				relations.insert(userpair);
-				rels.push_back(userpair);
-			}
-		}
-		hasChannel = channels.find(userpair) != channels.end();
-		if(hasChannel) {
-			insertConfirmedPayment(userpair,curr+16*d);
-		} else {
-			uint64_t index = insertPayment(userpair);
-			bool inWork = inwork.find(userpair) != inwork.end();
-			if((!inWork) && happenWithProbability(beta)) {
-				insertTransactionEvent(curr+p+r,0,false);
-				insertTransactionEvent(curr+p+r,0,false);
-				insertTransactionEvent(curr+2*p+r,index,true,true);
-				inwork.insert(userpair);
-			} else {
-				insertTransactionEvent(curr+p+r,index);
-			}
-		}
-	}
+	void handlePaymentEvent();
 
-	void handleBlockEvent() {
+	inline void handleBlockEvent() {
 		insertBlockEvent();
-		std::cout << "[" << (double)curr/1000 << "s]";
-		chain.createBlock(curr,m,k,s,channels,payments);
-		std::cout << std::endl;
+#ifdef DEBUG
+		std::cerr << "[" << (double)curr/1000 << "s]";
+#endif
+		chain.createBlock(curr,m,k,s,*this);
+#ifdef DEBUG
+		std::cerr << std::endl;
+#endif
 	}
 
 	inline void handleTransactionEvent(Transaction transaction) {
-		// std::cout << "[" << (double)curr/1000 << "s] Transaction happens " << transaction << std::endl;
 		insertTransaction(transaction);
 	}
 
+	inline void handleRelationEvent(UserPair userpair) {
+		if(relations.find(userpair) == relations.end()) {
+			relations.insert(userpair);
+			rels.push_back(userpair);
+		}
+	}
+
 public:
-	Simulator(double alpha, double beta, uint64_t lambda, uint64_t n, bool useDAPPlus)
-		:alpha(alpha), beta(beta), lambda(lambda), n(n), curr(0) {
+	Simulator(double alpha, double beta, uint64_t n, bool useDAPPlus)
+		:alpha(alpha), beta(beta), n(n), curr(0), confirmSum(0) {
 		if(!useDAPPlus) {
 			p = p1;
+			this->beta = 0;
 		} else {
 			p = p2;
 		}
@@ -339,30 +319,26 @@ public:
 		return curr;
 	}
 
-	bool update() {
-		if(events.empty()) return false;
-		Event event = *events.begin();
-		events.erase(events.begin());
-		handleEvent(event);
-	}
+	bool update();
 
 	inline uint64_t unconfirmedTransactions() const {
 		return chain.unconfirmedTransactions();
 	}
 
-	double averageConfirm() const {
-		double sum = 0;
-		uint64_t count = 0;
-		for(uint64_t i = 0; i < payments.size(); i++) {
-			const Payment &payment = payments.at(i);
-			auto t = payment.getTime();
-			auto c = payment.getConfirm();
-			if(c > t) {
-				count++;
-				sum += c-t;
-			}
-		}
-		return sum/count;
+	inline double averageConfirm() const {
+		if(confirms.empty()) return 100000;
+		return confirmSum/confirms.size();
+	}
+
+	inline static double averageTransaction(double x) {
+		x /= 1000;
+		if(x >= 2001) return 301;
+		if(x <= 1) return 1;
+		return 1+(x-1)*0.15;
+	}
+	
+	inline double averageTransaction() const {
+		return averageTransaction(averageConfirm());
 	}
 };
 
