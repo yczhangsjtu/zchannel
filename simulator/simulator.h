@@ -239,7 +239,7 @@ class Simulator {
 	inline void updateConfirm(double conf) {
 		confirms.push_back(conf);
 		confirmSum += conf;
-		while(confirms.size() > 100000) {
+		while(confirms.size() > 1000000) {
 			confirmSum -= confirms.front();
 			confirms.pop_front();
 		}

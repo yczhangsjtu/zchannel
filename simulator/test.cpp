@@ -80,6 +80,6 @@ int main() {
 	f.close();
 #endif
 
-	test(0.99,1.0,n,true,T,1);
+	test(0.9,1.0,n,true,T,1);
 	return 0;
 }
